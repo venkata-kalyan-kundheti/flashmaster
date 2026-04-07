@@ -83,11 +83,25 @@ router.post('/generate/:materialId', verifyToken, async (req, res) => {
     let text = '';
     let filePath = material.fileUrl;
 
-    if (material.fileUrl.includes('res.cloudinary.com') && material.cloudinaryPublicId) {
-      filePath = cloudinary.url(material.cloudinaryPublicId, {
-        resource_type: material.cloudinaryResourceType || 'auto',
-        sign_url: true,
-      });
+    const deriveCloudinaryPublicId = (url) => {
+      const match = url.match(/res\.cloudinary\.com\/[^/]+\/(?:[^/]+\/)*upload\/(?:v\d+\/)?(.+?)(?:\.[^/.]+)(?:$|\?)/);
+      return match ? match[1] : null;
+    };
+
+    let cloudinaryPublicId = material.cloudinaryPublicId;
+    if (material.fileUrl.includes('res.cloudinary.com')) {
+      if (!cloudinaryPublicId) {
+        cloudinaryPublicId = deriveCloudinaryPublicId(material.fileUrl);
+        console.log(`[Generate] Derived Cloudinary public ID from URL: ${cloudinaryPublicId}`);
+      }
+
+      if (cloudinaryPublicId) {
+        const resourceType = material.cloudinaryResourceType || (material.fileType === 'pdf' || material.fileType === 'text' ? 'raw' : 'image');
+        filePath = cloudinary.url(cloudinaryPublicId, {
+          resource_type: resourceType,
+          sign_url: true,
+        });
+      }
     }
 
     console.log(`[Generate] Material: ${material.title}, Type: ${material.fileType}, URL: ${filePath}`);
