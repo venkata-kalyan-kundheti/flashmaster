@@ -1,0 +1,8 @@
+.env
+
+/nodee_modules
+/dist   
+/logs
+/coverage
+/tsconfig.tsbuildinfo
+.DS_Store
