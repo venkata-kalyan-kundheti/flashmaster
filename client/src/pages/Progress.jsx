@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import ProgressChart from '../components/Progress/ProgressChart';
 
 export default function Progress() {
@@ -8,9 +8,7 @@ export default function Progress() {
   useEffect(() => {
      const fetchData = async () => {
          try {
-             const res = await axios.get(`${import.meta.env.VITE_API_URL}/progress`, {
-                 headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-             });
+             const res = await api.get('/progress');
              setData(res.data);
          } catch(err) {
              console.error('Failed to grab progress data');

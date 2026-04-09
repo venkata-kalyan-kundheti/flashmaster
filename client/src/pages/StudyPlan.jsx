@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import PlanForm from '../components/StudyPlan/PlanForm';
 import PlanCalendar from '../components/StudyPlan/PlanCalendar';
 import toast from 'react-hot-toast';
@@ -9,9 +9,7 @@ export default function StudyPlan() {
 
   const fetchPlans = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/studyplans`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const res = await api.get('/studyplans');
       setPlans(res.data);
     } catch {
       toast.error('Failed to load plans');
@@ -24,9 +22,7 @@ export default function StudyPlan() {
 
   const handleTaskComplete = async (planId, dayId) => {
     try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/studyplans/${planId}/day/${dayId}`, {}, {
-         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.patch(`/studyplans/${planId}/day/${dayId}`, {});
       toast.success('Awesome work!');
       fetchPlans();
     } catch {
@@ -36,9 +32,7 @@ export default function StudyPlan() {
 
   const handlePlanDelete = async (planId) => {
     try {
-       await axios.delete(`${import.meta.env.VITE_API_URL}/studyplans/${planId}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-       });
+       await api.delete(`/studyplans/${planId}`);
        toast.success('Study plan deleted');
        fetchPlans();
     } catch {

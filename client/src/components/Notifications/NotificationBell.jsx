@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { Bell } from 'lucide-react';
 
 export default function NotificationBell() {
@@ -8,9 +8,7 @@ export default function NotificationBell() {
 
   const fetchNotifs = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/notifications`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const res = await api.get('/notifications');
       setNotifications(res.data);
     } catch(err) {
       console.error(err);
@@ -24,16 +22,12 @@ export default function NotificationBell() {
   }, []);
 
   const markAsRead = async (id) => {
-    await axios.patch(`${import.meta.env.VITE_API_URL}/notifications/${id}/read`, {}, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    await api.patch(`/notifications/${id}/read`, {});
     fetchNotifs();
   };
 
   const markAllRead = async () => {
-    await axios.patch(`${import.meta.env.VITE_API_URL}/notifications/read-all`, {}, {
-      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-    });
+    await api.patch('/notifications/read-all', {});
     fetchNotifs();
   };
 

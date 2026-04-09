@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 
 export default function LeaderboardPage() {
@@ -8,9 +8,7 @@ export default function LeaderboardPage() {
   useEffect(() => {
     const fetchLeaders = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/leaderboard`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        const res = await api.get('/leaderboard');
         setLeaders(res.data);
       } catch {
         toast.error('Failed to load leaderboard');

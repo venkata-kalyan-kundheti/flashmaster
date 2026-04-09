@@ -5,11 +5,13 @@ import { ThemeProvider } from './context/ThemeContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Materials from './pages/Materials';
+import Flashcards from './pages/Flashcards';
 import StudyPlan from './pages/StudyPlan';
 import Progress from './pages/Progress';
 import Quiz from './pages/Quiz';
 import StudentHome from './pages/StudentHome';
 import LeaderboardPage from './pages/LeaderboardPage';
+import ResumeRoadmap from './pages/ResumeRoadmap';
 import Navbar from './components/Layout/Navbar';
 
 // Protected Route wrapper
@@ -45,6 +47,14 @@ function App() {
               } 
             />
             <Route 
+              path="/flashcards" 
+              element={
+                <ProtectedRoute>
+                  <Flashcards />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
               path="/studyplan" 
               element={
                 <ProtectedRoute>
@@ -73,6 +83,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <LeaderboardPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/resume-roadmap" 
+              element={
+                <ProtectedRoute>
+                  <ResumeRoadmap />
                 </ProtectedRoute>
               } 
             />

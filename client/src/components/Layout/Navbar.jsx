@@ -18,8 +18,10 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard' },
     { name: 'Materials', path: '/materials' },
+    { name: 'Flashcards', path: '/flashcards' },
     { name: 'Quizzes', path: '/quiz' },
     { name: 'Study Plan', path: '/studyplan' },
+    { name: 'Resume Roadmap', path: '/resume-roadmap' },
     { name: 'Progress', path: '/progress' },
     { name: 'Leaderboard', path: '/leaderboard' },
   ];

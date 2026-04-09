@@ -6,9 +6,9 @@ const Material = require('../models/Material');
 const Flashcard = require('../models/Flashcard');
 const verifyToken = require('../middleware/auth');
 const fs = require('fs');
-const cloudinary = require('../config/cloudinary');
+// const cloudinary = require('../config/cloudinary'); // Disabled Cloudinary
 
-// Ensure uploads dir exists (temp storage before Cloudinary upload)
+// Ensure uploads dir exists (permanent storage for files)
 const uploadDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
@@ -39,35 +39,19 @@ router.post('/upload', verifyToken, upload.single('file'), async (req, res) => {
     if (req.file.mimetype.includes('pdf')) fileType = 'pdf';
     else if (req.file.mimetype.includes('image')) fileType = 'image';
 
-    // Upload to Cloudinary
-    let cloudUrl = localPath; // fallback to local
-    let uploadResult = null;
-    try {
-      uploadResult = await cloudinary.uploader.upload(localPath, {
-        folder: 'flashmaster/materials',
-        resource_type: 'auto',
-      });
-      cloudUrl = uploadResult.secure_url;
-
-      // Remove local temp file after successful cloud upload
-      if (fs.existsSync(localPath)) {
-        fs.unlinkSync(localPath);
-      }
-    } catch (cloudErr) {
-      console.warn('Cloudinary upload failed, using local file:', cloudErr.message);
-      // Keep local file as fallback
-    }
+    // Store local file path directly (Cloudinary disabled)
+    const fileUrl = localPath;
 
     const material = new Material({
       userId: req.user.id,
       subject,
       topic,
       title,
-      fileUrl: cloudUrl,
+      fileUrl,
       fileType,
       fileSize: req.file.size,
-      cloudinaryPublicId: uploadResult?.public_id || '',
-      cloudinaryResourceType: uploadResult?.resource_type || '',
+      // cloudinaryPublicId: '', // Removed
+      // cloudinaryResourceType: '', // Removed
     });
 
     await material.save();
@@ -83,19 +67,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
     const material = await Material.findOne({ _id: req.params.id, userId: req.user.id });
     if (!material) return res.status(404).json({ message: 'Material not found' });
 
-    // Delete from Cloudinary if it's a cloud URL
-    if (material.fileUrl && material.fileUrl.includes('cloudinary')) {
-      try {
-        // Extract public_id from URL
-        const parts = material.fileUrl.split('/');
-        const folderAndFile = parts.slice(parts.indexOf('flashmaster')).join('/');
-        const publicId = folderAndFile.replace(/\.[^/.]+$/, ''); // remove extension
-        await cloudinary.uploader.destroy(publicId, { resource_type: 'auto' });
-      } catch (cloudErr) {
-        console.warn('Cloudinary delete failed:', cloudErr.message);
-      }
-    } else if (fs.existsSync(material.fileUrl)) {
-      // Delete local file
+    // Delete local file (Cloudinary disabled)
+    if (fs.existsSync(material.fileUrl)) {
       fs.unlinkSync(material.fileUrl);
     }
 

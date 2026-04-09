@@ -414,7 +414,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function generateFlashcards(text, subject) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
 
   const prompt = `
 You are an expert study assistant. Based on the following study material about "${subject}", 
@@ -443,7 +443,7 @@ ${text}
 }
 
 async function generateSummary(text, subject) {
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
   const prompt = `Summarize the following ${subject} study material in exactly 5 bullet points. Be concise.\n\n${text}`;
   const result = await model.generateContent(prompt);
   return result.response.text();

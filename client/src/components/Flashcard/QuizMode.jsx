@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 export default function QuizMode({ subject, flashcards, onFinish }) {
@@ -45,12 +45,10 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
   const finishQuiz = async (finalScore) => {
     setIsFinished(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/progress/quiz-score`, {
+      await api.post('/progress/quiz-score', {
         subject,
         score: finalScore,
         total: flashcards.length
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       toast.success('Score saved!');
     } catch(err) {

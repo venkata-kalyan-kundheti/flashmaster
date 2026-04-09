@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import toast from 'react-hot-toast';
 import QuizMode from '../components/Flashcard/QuizMode';
 
@@ -11,9 +11,7 @@ export default function Quiz() {
   useEffect(() => {
     const fetchCards = async () => {
        try {
-          const res = await axios.get(`${import.meta.env.VITE_API_URL}/flashcards`, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
+          const res = await api.get('/flashcards');
           const cards = res.data;
           setFlashcards(cards);
           

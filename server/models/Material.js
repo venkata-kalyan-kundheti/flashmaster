@@ -8,8 +8,8 @@ const MaterialSchema = new mongoose.Schema({
   fileUrl:   { type: String, required: true },
   fileType:  { type: String, enum: ['pdf', 'image', 'text'], required: true },
   fileSize:  { type: Number },
-  cloudinaryPublicId: { type: String, default: '' },
-  cloudinaryResourceType: { type: String, default: '' },
+  // cloudinaryPublicId: { type: String, default: '' }, // Disabled
+  // cloudinaryResourceType: { type: String, default: '' }, // Disabled
   summary:   { type: String, default: '' },
   flashcardsGenerated: { type: Boolean, default: false },
 }, { timestamps: true });

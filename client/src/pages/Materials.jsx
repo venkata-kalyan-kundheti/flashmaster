@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../utils/api';
 import { useDropzone } from 'react-dropzone';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -18,9 +18,7 @@ export default function Materials() {
 
   const fetchMaterials = async () => {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/materials`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      const res = await api.get('/materials');
       setMaterials(res.data);
     } catch (err) {
       toast.error('Failed to load materials');
@@ -49,9 +47,7 @@ export default function Materials() {
     const uploadToast = toast.loading('Uploading material...');
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/materials/upload`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+      await api.post('/materials/upload', formData);
       toast.success('Material uploaded successfully!', { id: uploadToast });
       setSubject('');
       setTopic('');
@@ -69,9 +65,7 @@ export default function Materials() {
   const handleGenerate = async (id) => {
     const genToast = toast.loading('Gemini is generating flashcards (this might take a few seconds)...');
     try {
-        await axios.post(`${import.meta.env.VITE_API_URL}/flashcards/generate/${id}`, {}, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await api.post(`/flashcards/generate/${id}`, {});
         toast.success('Flashcards Generated Successfully! 🧠', { id: genToast });
         fetchMaterials();
     } catch (err) {
@@ -81,9 +75,7 @@ export default function Materials() {
 
   const handleDelete = async (id) => {
     try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/materials/${id}`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        });
+        await api.delete(`/materials/${id}`);
         toast.success('Material deleted');
         fetchMaterials();
     } catch (err) {

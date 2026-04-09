@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 export default function PlanForm({ onPlanCreated }) {
@@ -18,13 +18,11 @@ export default function PlanForm({ onPlanCreated }) {
 
     const loadingToast = toast.loading('Generating schedule...');
     try {
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/studyplans`, {
+      const res = await api.post('/studyplans', {
         subject,
         examDate,
         dailyStudyHours: Number(dailyHours),
         chapters
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       toast.success('Study Plan Created!', { id: loadingToast });
       onPlanCreated(res.data);
