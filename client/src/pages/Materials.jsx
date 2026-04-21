@@ -5,9 +5,9 @@ import toast, { Toaster } from 'react-hot-toast';
 
 export default function Materials() {
   const [materials, setMaterials] = useState([]);
-  const [subject, setSubject] = useState('');
-  const [topic, setTopic] = useState('');
-  const [title, setTitle] = useState('');
+  const [subject, setSubject]     = useState('');
+  const [topic, setTopic]         = useState('');
+  const [title, setTitle]         = useState('');
   const [uploading, setUploading] = useState(false);
 
   const formatFileSize = (bytes) => {
@@ -20,22 +20,19 @@ export default function Materials() {
     try {
       const res = await api.get('/materials');
       setMaterials(res.data);
-    } catch (err) {
+    } catch {
       toast.error('Failed to load materials');
     }
   };
 
-  useEffect(() => {
-    fetchMaterials();
-  }, []);
+  useEffect(() => { fetchMaterials(); }, []);
 
   const onDrop = async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
     if (!subject || !title) {
-        toast.error('Please fill in Subject and Title before uploading!');
-        return;
+      toast.error('Please fill in Subject and Title before uploading!');
+      return;
     }
-    
     const file = acceptedFiles[0];
     const formData = new FormData();
     formData.append('file', file);
@@ -45,13 +42,10 @@ export default function Materials() {
 
     setUploading(true);
     const uploadToast = toast.loading('Uploading material...');
-
     try {
       await api.post('/materials/upload', formData);
       toast.success('Material uploaded successfully!', { id: uploadToast });
-      setSubject('');
-      setTopic('');
-      setTitle('');
+      setSubject(''); setTopic(''); setTitle('');
       fetchMaterials();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upload failed', { id: uploadToast });
@@ -60,92 +54,207 @@ export default function Materials() {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: { 'application/pdf': ['.pdf'], 'image/*': ['.jpeg', '.jpg', '.png'], 'text/plain': ['.txt'] } });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'image/*': ['.jpeg', '.jpg', '.png'],
+      'text/plain': ['.txt'],
+    },
+  });
 
   const handleGenerate = async (id) => {
-    const genToast = toast.loading('Gemini is generating flashcards (this might take a few seconds)...');
+    const genToast = toast.loading('Gemini is generating flashcards…');
     try {
-        await api.post(`/flashcards/generate/${id}`, {});
-        toast.success('Flashcards Generated Successfully! 🧠', { id: genToast });
-        fetchMaterials();
+      await api.post(`/flashcards/generate/${id}`, {});
+      toast.success('Flashcards Generated Successfully! 🧠', { id: genToast });
+      fetchMaterials();
     } catch (err) {
-        toast.error(err.response?.data?.message || 'Failed to generate flashcards', { id: genToast });
+      toast.error(err.response?.data?.message || 'Failed to generate flashcards', { id: genToast });
     }
   };
 
   const handleDelete = async (id) => {
     try {
-        await api.delete(`/materials/${id}`);
-        toast.success('Material deleted');
-        fetchMaterials();
-    } catch (err) {
-        toast.error('Failed to delete material');
+      await api.delete(`/materials/${id}`);
+      toast.success('Material deleted');
+      fetchMaterials();
+    } catch {
+      toast.error('Failed to delete material');
     }
-  }
+  };
 
   return (
     <div className="min-h-screen p-8 max-w-5xl mx-auto">
-        <Toaster position="top-right" toastOptions={{ style: { background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}}/>
-      <h1 className="text-4xl font-heading font-bold mb-8">Study Materials</h1>
-      
-      {/* Upload Section */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: 'var(--surface)',
+            backdropFilter: 'blur(12px)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border)',
+            borderRadius: '14px',
+            boxShadow: 'var(--card-shadow)',
+          },
+        }}
+      />
+
+      <h1 className="text-4xl font-heading font-bold mb-8" style={{ color: 'var(--text-primary)' }}>
+        Study Materials
+      </h1>
+
+      {/* ── Upload Section ─────────────────────────────────────── */}
       <div className="glass-card p-6 mb-12">
-        <h2 className="text-xl font-heading font-semibold mb-4">Upload New Material</h2>
+        <h2 className="text-xl font-heading font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+          Upload New Material
+        </h2>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <input placeholder="Subject (e.g. Biology)" value={subject} onChange={e => setSubject(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" />
-            <input placeholder="Title (e.g. Chapter 4)" value={title} onChange={e => setTitle(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" />
-            <input placeholder="Topic (Optional)" value={topic} onChange={e => setTopic(e.target.value)} className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" />
+          {[
+            { placeholder: 'Subject (e.g. Biology)', value: subject, set: setSubject },
+            { placeholder: 'Title (e.g. Chapter 4)',  value: title,   set: setTitle   },
+            { placeholder: 'Topic (Optional)',         value: topic,   set: setTopic   },
+          ].map(({ placeholder, value, set }) => (
+            <input
+              key={placeholder}
+              placeholder={placeholder}
+              value={value}
+              onChange={e => set(e.target.value)}
+              style={{
+                background: 'var(--input-bg)',
+                border: '1px solid var(--border)',
+                color: 'var(--input-text)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                outline: 'none',
+                width: '100%',
+                fontSize: '0.9rem',
+              }}
+              onFocus={e  => (e.target.style.borderColor = 'var(--border-focus)')}
+              onBlur={e   => (e.target.style.borderColor = 'var(--border)')}
+            />
+          ))}
         </div>
 
-        <div {...getRootProps()} className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 
-          ${isDragActive ? 'border-primary bg-primary/10' : 'border-white/20 hover:border-primary/50 bg-white/5'}`}>
+        <div
+          {...getRootProps()}
+          style={{
+            border: `2px dashed ${isDragActive ? '#8b5cf6' : 'var(--border)'}`,
+            background: isDragActive ? 'rgba(139,92,246,0.08)' : 'var(--input-bg)',
+            borderRadius: '14px',
+            padding: '48px 20px',
+            textAlign: 'center',
+            cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+        >
           <input {...getInputProps()} disabled={uploading} />
           {isDragActive ? (
-            <p className="text-primary text-lg">Drop the files here ...</p>
+            <p style={{ color: '#8b5cf6', fontSize: '1.1rem' }}>Drop the files here …</p>
           ) : (
             <div>
-                <p className="text-lg mb-2">Drag & drop some files here, or click to select files</p>
-                <p className="text-sm text-white/50">Supports PDF, JPG, PNG, TXT (Max 8000 tokens for Gemini)</p>
+              <p style={{ color: 'var(--text-primary)', fontSize: '1rem', marginBottom: '6px' }}>
+                Drag &amp; drop some files here, or click to select files
+              </p>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
+                Supports PDF, JPG, PNG, TXT (Max 8000 tokens for Gemini)
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Materials List */}
+      {/* ── Materials Grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {materials.map(mat => (
-            <div key={mat._id} className="glass-card p-6 flex flex-col justify-between">
-                <div>
-                   <div className="flex justify-between items-start mb-2">
-                       <span className="text-xs uppercase tracking-widest text-secondary font-semibold">{mat.subject}</span>
-                       <span className="text-xs text-white/40">{new Date(mat.createdAt).toLocaleDateString()}</span>
-                   </div>
-                   <h3 className="text-xl font-bold font-heading mb-1">{mat.title}</h3>
-                   {mat.topic && <p className="text-sm text-white/60 mb-4">{mat.topic}</p>}
-                   <div className="flex gap-2 text-xs mb-6">
-                       <span className="px-2 py-1 bg-white/5 rounded-md border border-white/10">{mat.fileType.toUpperCase()}</span>
-                       <span className="px-2 py-1 bg-white/5 rounded-md border border-white/10">{formatFileSize(mat.fileSize)}</span>
-                   </div>
-                </div>
-                
-                <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/10">
-                    <div>
-                        {mat.flashcardsGenerated ? (
-                            <span className="text-secondary text-sm flex items-center gap-1">✅ Flashcards Ready</span>
-                        ) : (
-                            <button 
-                                onClick={() => handleGenerate(mat._id)}
-                                className="text-primary hover:text-white text-sm font-medium hover:underline flex items-center gap-1 transition-all"
-                            >
-                                ⚡ Generate with Gemini
-                            </button>
-                        )}
-                    </div>
-                    <button onClick={() => handleDelete(mat._id)} className="text-red-400 hover:text-red-300 text-sm">Delete</button>
-                </div>
+          <div key={mat._id} className="glass-card p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-start mb-2">
+                <span
+                  className="text-xs uppercase tracking-widest font-semibold"
+                  style={{ color: '#8b5cf6' }}
+                >
+                  {mat.subject}
+                </span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {new Date(mat.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+
+              <h3
+                className="text-xl font-bold font-heading mb-1"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {mat.title}
+              </h3>
+
+              {mat.topic && (
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                  {mat.topic}
+                </p>
+              )}
+
+              <div className="flex gap-2 text-xs mb-6">
+                {[mat.fileType?.toUpperCase(), formatFileSize(mat.fileSize)].map(label => (
+                  <span
+                    key={label}
+                    style={{
+                      padding: '3px 10px',
+                      background: 'var(--badge-bg)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--text-secondary)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
+
+            <div
+              className="flex justify-between items-center mt-4 pt-4"
+              style={{ borderTop: '1px solid var(--border)' }}
+            >
+              <div>
+                {mat.flashcardsGenerated ? (
+                  <span
+                    className="text-sm flex items-center gap-1"
+                    style={{ color: '#14b8a6', fontWeight: 500 }}
+                  >
+                    ✅ Flashcards Ready
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleGenerate(mat._id)}
+                    className="btn-gemini"
+                  >
+                    <span className="gemini-icon">⚡</span>
+                    Generate with Gemini
+                  </button>
+                )}
+              </div>
+
+              <button
+                onClick={() => handleDelete(mat._id)}
+                className="btn-danger"
+              >
+                🗑 Delete
+              </button>
+            </div>
+          </div>
         ))}
-        {materials.length === 0 && <p className="text-white/50 col-span-full text-center">No materials uploaded yet.</p>}
+
+        {materials.length === 0 && (
+          <p
+            className="col-span-full text-center py-12"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            No materials uploaded yet.
+          </p>
+        )}
       </div>
     </div>
   );

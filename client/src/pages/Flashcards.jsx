@@ -1,40 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import { Toaster } from 'react-hot-toast';
 
+const toastStyle = {
+  style: {
+    background: 'var(--surface)',
+    backdropFilter: 'blur(12px)',
+    color: 'var(--text-primary)',
+    border: '1px solid var(--border)',
+    borderRadius: '14px',
+  },
+};
+
+/* ── Inject keyframe CSS once ─────────────────────────────────── */
+const KEYFRAMES = `
+  @keyframes card-turn-out-left {
+    0%   { transform: perspective(1000px) rotateY(0deg);   opacity: 1; }
+    100% { transform: perspective(1000px) rotateY(-90deg); opacity: 0; }
+  }
+  @keyframes card-turn-in-right {
+    0%   { transform: perspective(1000px) rotateY(90deg);  opacity: 0; }
+    100% { transform: perspective(1000px) rotateY(0deg);   opacity: 1; }
+  }
+  @keyframes card-turn-out-right {
+    0%   { transform: perspective(1000px) rotateY(0deg);  opacity: 1; }
+    100% { transform: perspective(1000px) rotateY(90deg); opacity: 0; }
+  }
+  @keyframes card-turn-in-left {
+    0%   { transform: perspective(1000px) rotateY(-90deg); opacity: 0; }
+    100% { transform: perspective(1000px) rotateY(0deg);   opacity: 1; }
+  }
+`;
+
+function injectKeyframes() {
+  if (document.getElementById('fc-keyframes')) return;
+  const style = document.createElement('style');
+  style.id = 'fc-keyframes';
+  style.textContent = KEYFRAMES;
+  document.head.appendChild(style);
+}
+
 export default function Flashcards() {
-  const [flashcards, setFlashcards] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [activeSubject, setActiveSubject] = useState(null);
+  const [flashcards, setFlashcards]             = useState([]);
+  const [subjects, setSubjects]                 = useState([]);
+  const [activeSubject, setActiveSubject]       = useState(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [isFlipped, setIsFlipped] = useState(false);
-  const [difficulty, setDifficulty] = useState({});
+  const [isFlipped, setIsFlipped]               = useState(false);
+  const [difficulty, setDifficulty]             = useState({});
+
+  /* Turn animation state */
+  const [animating, setAnimating]   = useState(false);
+  const [animStyle, setAnimStyle]   = useState({});
+  const [displayIdx, setDisplayIdx] = useState(0); // what's actually rendered
+  const cardRef                     = useRef(null);
+
+  useEffect(() => {
+    injectKeyframes();
+  }, []);
 
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const res = await api.get('/flashcards');
+        const res   = await api.get('/flashcards');
         const cards = res.data;
         setFlashcards(cards);
-        
         const uniqueSubjects = [...new Set(cards.map(c => c.subject))];
         setSubjects(uniqueSubjects.map(sub => ({
-          name: sub,
-          count: cards.filter(c => c.subject === sub).length
+          name:  sub,
+          count: cards.filter(c => c.subject === sub).length,
         })));
-      } catch (err) {
+      } catch {
         toast.error('Failed to load flashcards');
       }
     };
     fetchCards();
   }, []);
 
-  const subjectCards = activeSubject 
-    ? flashcards.filter(f => f.subject === activeSubject)
-    : [];
-
-  const currentCard = subjectCards[currentCardIndex];
+  const subjectCards = activeSubject ? flashcards.filter(f => f.subject === activeSubject) : [];
+  const currentCard  = subjectCards[displayIdx];
 
   const handleDifficultyChange = async (newDifficulty) => {
     if (!currentCard) return;
@@ -42,31 +86,57 @@ export default function Flashcards() {
       await api.patch(`/flashcards/${currentCard._id}/difficulty`, { difficulty: newDifficulty });
       setDifficulty(prev => ({ ...prev, [currentCard._id]: newDifficulty }));
       toast.success(`Marked as ${newDifficulty}!`);
-    } catch (err) {
+    } catch {
       toast.error('Failed to update difficulty');
     }
   };
 
-  const handleNext = () => {
-    if (currentCardIndex < subjectCards.length - 1) {
-      setCurrentCardIndex(currentCardIndex + 1);
-      setIsFlipped(false);
-    }
+  /* ─── Card Turn Animation ─────────────────────────────────── */
+  const navigateTo = (nextIdx, direction /* 'next' | 'prev' */) => {
+    if (animating || nextIdx < 0 || nextIdx >= subjectCards.length) return;
+    setAnimating(true);
+    setIsFlipped(false);
+
+    const outAnim = direction === 'next' ? 'card-turn-out-left' : 'card-turn-out-right';
+    const inAnim  = direction === 'next' ? 'card-turn-in-right' : 'card-turn-in-left';
+    const dur     = 260; // ms per half
+
+    /* Phase 1: turn current card out */
+    setAnimStyle({
+      animation: `${outAnim} ${dur}ms cubic-bezier(0.4,0,0.2,1) forwards`,
+    });
+
+    setTimeout(() => {
+      /* Swap content mid-flip */
+      setDisplayIdx(nextIdx);
+      setCurrentCardIndex(nextIdx);
+
+      /* Phase 2: turn new card in */
+      setAnimStyle({
+        animation: `${inAnim} ${dur}ms cubic-bezier(0.4,0,0.2,1) forwards`,
+      });
+
+      setTimeout(() => {
+        setAnimStyle({});
+        setAnimating(false);
+      }, dur);
+    }, dur);
   };
 
-  const handlePrev = () => {
-    if (currentCardIndex > 0) {
-      setCurrentCardIndex(currentCardIndex - 1);
-      setIsFlipped(false);
-    }
-  };
+  const handleNext = () => navigateTo(currentCardIndex + 1, 'next');
+  const handlePrev = () => navigateTo(currentCardIndex - 1, 'prev');
 
+  /* ── Subject Picker ──────────────────────────────────────── */
   if (!activeSubject) {
     return (
       <div className="min-h-screen p-8 max-w-5xl mx-auto">
-        <Toaster position="top-right" toastOptions={{ style: { background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}}/>
-        <h1 className="text-4xl font-heading font-bold mb-2">📚 Flashcards</h1>
-        <p className="text-white/60 mb-12">Click on a subject to study its flashcards</p>
+        <Toaster position="top-right" toastOptions={toastStyle} />
+        <h1 className="text-4xl font-heading font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+          📚 Flashcards
+        </h1>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '48px' }}>
+          Click on a subject to study its flashcards
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {subjects.map(sub => (
@@ -75,112 +145,176 @@ export default function Flashcards() {
               onClick={() => {
                 setActiveSubject(sub.name);
                 setCurrentCardIndex(0);
+                setDisplayIdx(0);
                 setIsFlipped(false);
+                setAnimStyle({});
               }}
-              className="glass-card p-6 hover:border-primary/50 hover:scale-[1.02] transition-all text-left group"
+              className="glass-card p-6 text-left"
+              style={{ border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.2s', background: 'none', width: '100%' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.45)'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)';           e.currentTarget.style.transform = 'translateY(0)'; }}
             >
-              <h3 className="text-2xl font-bold font-heading mb-2 text-primary group-hover:text-white transition-colors">{sub.name}</h3>
-              <p className="text-white/60">{sub.count} Cards Available</p>
+              <h3 className="text-2xl font-bold font-heading mb-2" style={{ color: '#8b5cf6' }}>{sub.name}</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>{sub.count} Cards Available</p>
             </button>
           ))}
           {subjects.length === 0 && (
-            <p className="text-white/40 col-span-full text-center">No flashcards yet. Upload materials and generate them first!</p>
+            <p className="col-span-full text-center py-12" style={{ color: 'var(--text-muted)' }}>
+              No flashcards yet. Upload materials and generate them first!
+            </p>
           )}
         </div>
       </div>
     );
   }
 
+  /* ── Study View ──────────────────────────────────────────── */
+  const diffColors = {
+    easy:   { active: 'rgba(20,184,166,0.2)',  border: 'rgba(20,184,166,0.5)',  text: '#5eead4' },
+    medium: { active: 'rgba(234,179,8,0.2)',   border: 'rgba(234,179,8,0.5)',   text: '#fbbf24' },
+    hard:   { active: 'rgba(239,68,68,0.2)',   border: 'rgba(239,68,68,0.5)',   text: '#f87171' },
+  };
+
   return (
     <div className="min-h-screen p-8 max-w-3xl mx-auto">
-      <Toaster position="top-right" toastOptions={{ style: { background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }}}/>
-      
+      <Toaster position="top-right" toastOptions={toastStyle} />
+
       <button
         onClick={() => setActiveSubject(null)}
-        className="text-white/60 hover:text-white mb-8 flex items-center gap-2 transition-colors"
+        style={{ color: 'var(--text-secondary)', marginBottom: '32px', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 500 }}
+        onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+        onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
       >
         ← Back to Subjects
       </button>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-heading font-bold mb-2">{activeSubject}</h1>
-        <p className="text-white/60">Card {currentCardIndex + 1} of {subjectCards.length}</p>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 className="text-3xl font-heading font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{activeSubject}</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Card {displayIdx + 1} of {subjectCards.length}</p>
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-white/5 h-2 rounded-full mb-8 overflow-hidden">
-        <div 
-          className="h-full bg-primary transition-all duration-300" 
-          style={{ width: `${((currentCardIndex + 1) / subjectCards.length) * 100}%` }}
-        ></div>
+      <div style={{ width: '100%', height: '6px', background: 'var(--surface)', borderRadius: '999px', marginBottom: '32px', overflow: 'hidden' }}>
+        <div style={{
+          height: '100%',
+          borderRadius: '999px',
+          background: 'linear-gradient(90deg, #7c3aed, #a855f7)',
+          width: `${((displayIdx + 1) / subjectCards.length) * 100}%`,
+          transition: 'width 0.4s ease',
+        }} />
       </div>
 
-      {/* Flashcard */}
+      {/* ── 3D Turning Flashcard ────────────────────────────── */}
       <div
-        onClick={() => setIsFlipped(!isFlipped)}
-        className="glass-card p-8 min-h-[400px] flex items-center justify-center cursor-pointer hover:border-primary/50 transition-all transform hover:scale-[1.02] mb-8"
+        style={{ perspective: '1200px', marginBottom: '24px' }}
       >
-        <div className="text-center">
-          <p className="text-sm text-white/50 uppercase tracking-widest mb-4">
-            {isFlipped ? '📝 Answer' : '❓ Question'}
-          </p>
-          <h2 className="text-3xl font-heading font-bold leading-relaxed">
-            {isFlipped ? currentCard?.answer : currentCard?.question}
-          </h2>
-          <p className="text-white/40 mt-6 text-sm">Click to flip</p>
+        {/* Flip wrapper — this is what rotates on click */}
+        <div
+          ref={cardRef}
+          onClick={() => !animating && setIsFlipped(f => !f)}
+          className="glass-card"
+          style={{
+            minHeight: '380px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: animating ? 'default' : 'pointer',
+            textAlign: 'center',
+            padding: '40px',
+            borderColor: isFlipped ? 'rgba(20,184,166,0.35)' : 'rgba(139,92,246,0.25)',
+            transformOrigin: 'center center',
+            willChange: 'transform',
+            /* Turn nav animation */
+            ...animStyle,
+          }}
+        >
+          <div>
+            <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              {isFlipped ? '📝 Answer' : '❓ Question'}
+            </p>
+            <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
+              {isFlipped ? currentCard?.answer : currentCard?.question}
+            </h2>
+            <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
+              {animating ? '' : 'Click to flip'}
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Difficulty Controls */}
-      <div className="glass-card p-6 mb-8">
-        <p className="text-sm text-white/60 mb-3">Mark difficulty level:</p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => handleDifficultyChange('easy')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              difficulty[currentCard?._id] === 'easy'
-                ? 'bg-green-500/30 border border-green-500/50 text-green-300'
-                : 'bg-white/5 border border-white/10 hover:border-green-500/30 text-white/60 hover:text-white'
-            }`}
-          >
-            🟢 Easy
-          </button>
-          <button
-            onClick={() => handleDifficultyChange('medium')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              difficulty[currentCard?._id] === 'medium'
-                ? 'bg-yellow-500/30 border border-yellow-500/50 text-yellow-300'
-                : 'bg-white/5 border border-white/10 hover:border-yellow-500/30 text-white/60 hover:text-white'
-            }`}
-          >
-            🟡 Medium
-          </button>
-          <button
-            onClick={() => handleDifficultyChange('hard')}
-            className={`px-4 py-2 rounded-lg transition-all ${
-              difficulty[currentCard?._id] === 'hard'
-                ? 'bg-red-500/30 border border-red-500/50 text-red-300'
-                : 'bg-white/5 border border-white/10 hover:border-red-500/30 text-white/60 hover:text-white'
-            }`}
-          >
-            🔴 Hard
-          </button>
+      <div className="glass-card p-5" style={{ marginBottom: '24px' }}>
+        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '12px' }}>Mark difficulty level:</p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          {['easy', 'medium', 'hard'].map(d => {
+            const c        = diffColors[d];
+            const isActive = difficulty[currentCard?._id] === d;
+            return (
+              <button
+                key={d}
+                onClick={() => handleDifficultyChange(d)}
+                style={{
+                  padding: '7px 18px',
+                  borderRadius: '10px',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  border: `1px solid ${isActive ? c.border : 'var(--border)'}`,
+                  background: isActive ? c.active : 'var(--surface)',
+                  color: isActive ? c.text : 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'all 0.18s',
+                }}
+              >
+                {d === 'easy' ? '🟢' : d === 'medium' ? '🟡' : '🔴'} {d.charAt(0).toUpperCase() + d.slice(1)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-4 justify-center">
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
         <button
           onClick={handlePrev}
-          disabled={currentCardIndex === 0}
-          className="px-6 py-3 bg-white/5 hover:bg-white/10 disabled:opacity-30 rounded-lg transition-all disabled:cursor-not-allowed"
+          disabled={displayIdx === 0 || animating}
+          style={{
+            padding: '10px 28px',
+            borderRadius: '12px',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            color: 'var(--text-primary)',
+            fontWeight: 600,
+            cursor: displayIdx === 0 || animating ? 'not-allowed' : 'pointer',
+            opacity: displayIdx === 0 ? 0.35 : 1,
+            transition: 'all 0.18s',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '0.95rem',
+          }}
+          onMouseEnter={e => { if (displayIdx > 0 && !animating) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
         >
           ← Previous
         </button>
+
         <button
           onClick={handleNext}
-          disabled={currentCardIndex === subjectCards.length - 1}
-          className="px-6 py-3 bg-primary hover:bg-primary/80 disabled:opacity-30 rounded-lg transition-all disabled:cursor-not-allowed"
+          disabled={displayIdx === subjectCards.length - 1 || animating}
+          style={{
+            padding: '10px 28px',
+            borderRadius: '12px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+            color: '#fff',
+            fontWeight: 700,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontSize: '0.95rem',
+            cursor: displayIdx === subjectCards.length - 1 || animating ? 'not-allowed' : 'pointer',
+            opacity: displayIdx === subjectCards.length - 1 ? 0.35 : 1,
+            boxShadow: '0 4px 16px rgba(139,92,246,0.35)',
+            transition: 'all 0.18s',
+          }}
+          onMouseEnter={e => { if (displayIdx < subjectCards.length - 1 && !animating) { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(139,92,246,0.5)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.35)'; }}
         >
           Next →
         </button>

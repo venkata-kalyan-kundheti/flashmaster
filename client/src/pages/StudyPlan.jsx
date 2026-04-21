@@ -16,9 +16,7 @@ export default function StudyPlan() {
     }
   };
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+  useEffect(() => { fetchPlans(); }, []);
 
   const handleTaskComplete = async (planId, dayId) => {
     try {
@@ -32,40 +30,79 @@ export default function StudyPlan() {
 
   const handlePlanDelete = async (planId) => {
     try {
-       await api.delete(`/studyplans/${planId}`);
-       toast.success('Study plan deleted');
-       fetchPlans();
+      await api.delete(`/studyplans/${planId}`);
+      toast.success('Study plan deleted');
+      fetchPlans();
     } catch {
-       toast.error('Failed to delete plan');
+      toast.error('Failed to delete plan');
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-12">
+    <div className="min-h-screen p-8 max-w-6xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
       <div>
-        <h1 className="text-4xl font-heading font-bold mb-2">My Study Plan</h1>
-        <p className="text-white/60">Generate an AI-optimized schedule up to your exam dates.</p>
+        <h1 className="text-4xl font-heading font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+          My Study Plan
+        </h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+          Generate an AI-optimized schedule up to your exam dates.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-           <PlanForm onPlanCreated={plan => setPlans([...plans, plan])} />
-           
-           <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg text-white/80">Active Plans</h3>
+        {/* Sidebar */}
+        <div className="lg:col-span-1" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <PlanForm onPlanCreated={plan => setPlans([...plans, plan])} />
+
+          <div>
+            <h3
+              className="font-heading font-semibold text-lg"
+              style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}
+            >
+              Active Plans
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {plans.map(p => (
-                 <div key={p._id} className="relative glass-card p-4 group">
-                    <button onClick={() => handlePlanDelete(p._id)} className="absolute top-2 right-2 text-white/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">✖</button>
-                    <h4 className="font-bold text-accent">{p.subject}</h4>
-                    <p className="text-xs text-white/60 mt-1">Exam: {new Date(p.examDate).toLocaleDateString()}</p>
-                 </div>
+                <div
+                  key={p._id}
+                  className="glass-card p-4"
+                  style={{ position: 'relative' }}
+                >
+                  <button
+                    onClick={() => handlePlanDelete(p._id)}
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '10px',
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      opacity: 0.5,
+                      transition: 'opacity 0.2s, color 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#f87171'; }}
+                    onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                  >
+                    ✖
+                  </button>
+                  <h4 className="font-bold" style={{ color: '#ec4899' }}>{p.subject}</h4>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Exam: {new Date(p.examDate).toLocaleDateString()}
+                  </p>
+                </div>
               ))}
-              {plans.length === 0 && <p className="text-sm text-white/40">No plans active.</p>}
-           </div>
+              {plans.length === 0 && (
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No plans active.</p>
+              )}
+            </div>
+          </div>
         </div>
 
+        {/* Calendar */}
         <div className="lg:col-span-2">
-           <PlanCalendar plans={plans} onTaskComplete={handleTaskComplete} />
+          <PlanCalendar plans={plans} onTaskComplete={handleTaskComplete} />
         </div>
       </div>
     </div>
