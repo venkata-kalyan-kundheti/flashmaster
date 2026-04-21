@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 /* ═══════════════════════════════════════════════════════════════
    PREMIUM MIDNIGHT NAVY — Dark Theme (default)
@@ -213,8 +213,8 @@ body.light .btn-danger       { border-color: rgba(220,38,38,0.22); background: r
 body.light .btn-danger:hover { background: rgba(220,38,38,0.11); color: #b91c1c; }
 
 /* ─── Smooth global transitions ─────────────────────────────── */
-* {
-  transition-property: background-color, border-color, box-shadow, color, opacity;
+body, .glass-card, input, textarea, select, button, a {
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform;
   transition-duration: 0.2s;
   transition-timing-function: ease;
 }
