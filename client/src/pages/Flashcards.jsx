@@ -206,38 +206,82 @@ export default function Flashcards() {
 
       {/* ── 3D Turning Flashcard ────────────────────────────── */}
       <div
-        style={{ perspective: '1200px', marginBottom: '24px' }}
+        style={{ perspective: '1400px', marginBottom: '24px' }}
       >
-        {/* Flip wrapper — this is what rotates on click */}
+        {/* Navigation turn animation wrapper */}
         <div
           ref={cardRef}
-          onClick={() => !animating && setIsFlipped(f => !f)}
-          className="glass-card"
           style={{
             minHeight: '380px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: animating ? 'default' : 'pointer',
-            textAlign: 'center',
-            padding: '40px',
-            borderColor: isFlipped ? 'rgba(20,184,166,0.35)' : 'rgba(139,92,246,0.25)',
             transformOrigin: 'center center',
             willChange: 'transform',
-            /* Turn nav animation */
             ...animStyle,
           }}
         >
-          <div>
-            <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              {isFlipped ? '📝 Answer' : '❓ Question'}
-            </p>
-            <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
-              {isFlipped ? currentCard?.answer : currentCard?.question}
-            </h2>
-            <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
-              {animating ? '' : 'Click to flip'}
-            </p>
+          {/* Flip wrapper */}
+          <div
+            className={`card-inner ${isFlipped ? 'flipped' : ''}`}
+            onClick={() => !animating && setIsFlipped(f => !f)}
+            style={{
+              cursor: animating ? 'default' : 'pointer',
+              width: '100%',
+              height: '100%',
+              position: 'relative',
+              minHeight: '380px'
+            }}
+          >
+            {/* FRONT FACE (Question) */}
+            <div
+              className="card-face glass-card"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '40px',
+                borderColor: 'rgba(139,92,246,0.25)',
+              }}
+            >
+              <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                ❓ Question
+              </p>
+              <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                {currentCard?.question}
+              </h2>
+              <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
+                {animating ? '' : 'Click to flip'}
+              </p>
+            </div>
+
+            {/* BACK FACE (Answer) */}
+            <div
+              className="card-face glass-card"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                padding: '40px',
+                borderColor: 'rgba(20,184,166,0.35)',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                📝 Answer
+              </p>
+              <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
+                {currentCard?.answer}
+              </h2>
+              <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
+                {animating ? '' : 'Click to flip back'}
+              </p>
+            </div>
           </div>
         </div>
       </div>
