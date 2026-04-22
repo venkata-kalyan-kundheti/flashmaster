@@ -3,9 +3,11 @@ import api from '../utils/api';
 import PlanForm from '../components/StudyPlan/PlanForm';
 import PlanCalendar from '../components/StudyPlan/PlanCalendar';
 import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StudyPlan() {
   const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchPlans = async () => {
     try {
@@ -13,6 +15,8 @@ export default function StudyPlan() {
       setPlans(res.data);
     } catch {
       toast.error('Failed to load plans');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,11 +44,19 @@ export default function StudyPlan() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen p-4 sm:p-8 max-w-6xl mx-auto">
+        <LoadingSpinner message="Loading study plans..." />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen p-8 max-w-6xl mx-auto space-y-12">
+    <div className="min-h-screen p-4 sm:p-8 max-w-6xl mx-auto space-y-12">
       <div>
-        <h1 className="text-4xl font-heading font-bold mb-2">My Study Plan</h1>
-        <p className="text-white/60">Generate an AI-optimized schedule up to your exam dates.</p>
+        <h1 className="text-4xl font-heading font-bold mb-2 text-th-text">My Study Plan</h1>
+        <p className="text-th-muted">Generate a Gemini-powered schedule up to your exam date.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -52,15 +64,15 @@ export default function StudyPlan() {
            <PlanForm onPlanCreated={plan => setPlans([...plans, plan])} />
            
            <div className="space-y-4">
-              <h3 className="font-heading font-semibold text-lg text-white/80">Active Plans</h3>
+              <h3 className="font-heading font-semibold text-lg text-th-text/80">Active Plans</h3>
               {plans.map(p => (
-                 <div key={p._id} className="relative glass-card p-4 group">
-                    <button onClick={() => handlePlanDelete(p._id)} className="absolute top-2 right-2 text-white/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">✖</button>
+                 <div key={p._id} className="relative glass-card p-4 group hover:-translate-y-0.5 transition-all">
+                    <button onClick={() => handlePlanDelete(p._id)} className="absolute top-2 right-2 text-th-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">✖</button>
                     <h4 className="font-bold text-accent">{p.subject}</h4>
-                    <p className="text-xs text-white/60 mt-1">Exam: {new Date(p.examDate).toLocaleDateString()}</p>
+                    <p className="text-xs text-th-muted mt-1">Exam: {new Date(p.examDate).toLocaleDateString()}</p>
                  </div>
               ))}
-              {plans.length === 0 && <p className="text-sm text-white/40">No plans active.</p>}
+              {plans.length === 0 && <p className="text-sm text-th-muted">No plans active.</p>}
            </div>
         </div>
 

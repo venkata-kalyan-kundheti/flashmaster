@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/auth');
 const StudyPlan = require('../models/StudyPlan');
+const { generateStudyPlan } = require('../utils/geminiHelper');
 
 router.get('/', verifyToken, async (req, res) => {
   try {
@@ -15,43 +16,50 @@ router.get('/', verifyToken, async (req, res) => {
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { subject, examDate, dailyStudyHours, chapters } = req.body;
-    
-    // Auto-schedule logic
+    if (!subject || !examDate || !dailyStudyHours || !Array.isArray(chapters) || chapters.length === 0) {
+      return res.status(400).json({ message: 'subject, examDate, dailyStudyHours and chapters are required' });
+    }
+
+    const chapterNames = chapters
+      .map((c) => (typeof c?.name === 'string' ? c.name.trim() : ''))
+      .filter(Boolean);
+
+    if (chapterNames.length === 0) {
+      return res.status(400).json({ message: 'At least one valid chapter is required' });
+    }
+
     const start = new Date();
     const end = new Date(examDate);
     const timeDiff = end.getTime() - start.getTime();
     const daysAvailable = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
+
     if (daysAvailable <= 0) {
       return res.status(400).json({ message: 'Exam date must be in the future' });
     }
 
-    const schedule = [];
-    const chaptersPerDay = Math.ceil(chapters.length / daysAvailable);
-    
-    for (let i = 0; i < daysAvailable; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() + i + 1); // Future dates
-      
-      const tasks = chapters
-        .slice(i * chaptersPerDay, (i + 1) * chaptersPerDay)
-        .map(c => c.name);
-        
-      if (tasks.length > 0) {
-        schedule.push({
-          date: date,
-          tasks: tasks,
-          isCompleted: false
-        });
-      }
+    const aiPlan = await generateStudyPlan(subject, examDate, Number(dailyStudyHours), chapterNames);
+
+    const normalizedChapters = (aiPlan.chapters.length > 0 ? aiPlan.chapters : chapterNames).map((name) => ({
+      name,
+      isCompleted: false,
+    }));
+
+    const schedule = aiPlan.schedule.map((day) => ({
+      date: new Date(day.date),
+      tasks: day.tasks,
+      isCompleted: false,
+    })).filter((day) => !Number.isNaN(day.date.getTime()));
+
+    if (schedule.length === 0) {
+      return res.status(500).json({ message: 'Gemini returned an invalid schedule. Please try again.' });
     }
 
     const plan = new StudyPlan({
       userId: req.user.id,
       subject,
       examDate,
-      dailyStudyHours,
-      chapters: chapters.map(c => ({ name: c.name, isCompleted: false })),
+      dailyStudyHours: Number(dailyStudyHours),
+      chapters: normalizedChapters,
       schedule
     });
 

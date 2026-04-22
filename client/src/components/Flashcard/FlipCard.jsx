@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useVoiceRead } from '../../hooks/useVoiceRead';
+import renderFormattedText from '../../utils/renderFormattedText';
 
 export default function FlipCard({ card, onDifficultyChange }) {
   const [flipped, setFlipped] = useState(false);
@@ -22,9 +23,9 @@ export default function FlipCard({ card, onDifficultyChange }) {
 
         {/* Back — Answer */}
         <div className="card-face card-back">
-          <p className="text-lg text-white text-center leading-relaxed mb-6 overflow-y-auto max-h-[150px]">
-            {card.answer}
-          </p>
+          <div className="overflow-y-auto max-h-[150px] mb-4 w-full px-1">
+            {renderFormattedText(card.answer)}
+          </div>
 
           {/* Difficulty buttons */}
           <div className="flex gap-3" onClick={e => e.stopPropagation()}>

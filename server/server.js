@@ -9,7 +9,6 @@ dotenv.config();
 
 // ENV diagnostics — verify all critical variables are loaded
 console.log('ENV CHECK - GEMINI KEY exists:', !!process.env.GEMINI_API_KEY);
-console.log('ENV CHECK - GEMINI KEY starts:', process.env.GEMINI_API_KEY?.substring(0, 8));
 console.log('ENV CHECK - MONGO URI exists:', !!process.env.MONGO_URI);
 console.log('ENV CHECK - JWT SECRET exists:', !!process.env.JWT_SECRET);
 // console.log('ENV CHECK - CLOUDINARY_CLOUD_NAME exists:', !!process.env.CLOUDINARY_CLOUD_NAME); // Disabled
@@ -57,7 +56,7 @@ app.use('/api/studyplans', require('./routes/studyplans'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/resume', require('./routes/resume'));
+app.use('/api/admin', require('./routes/admin'));
 
 
 // Global error handler

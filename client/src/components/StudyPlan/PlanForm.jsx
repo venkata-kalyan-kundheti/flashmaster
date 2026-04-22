@@ -16,7 +16,7 @@ export default function PlanForm({ onPlanCreated }) {
 
     const chapters = chaptersInput.split(',').map(c => ({ name: c.trim() })).filter(c => c.name !== '');
 
-    const loadingToast = toast.loading('Generating schedule...');
+    const loadingToast = toast.loading('Gemini is generating your study plan...');
     try {
       const res = await api.post('/studyplans', {
         subject,
@@ -24,7 +24,7 @@ export default function PlanForm({ onPlanCreated }) {
         dailyStudyHours: Number(dailyHours),
         chapters
       });
-      toast.success('Study Plan Created!', { id: loadingToast });
+      toast.success('Gemini study plan created!', { id: loadingToast });
       onPlanCreated(res.data);
       setSubject(''); setExamDate(''); setDailyHours(''); setChaptersInput('');
     } catch (err) {
@@ -37,27 +37,27 @@ export default function PlanForm({ onPlanCreated }) {
       <h3 className="text-xl font-heading font-semibold text-primary mb-4">Create New Plan</h3>
       
       <div>
-        <label className="block text-sm text-white/70 mb-1">Subject</label>
-        <input value={subject} onChange={e=>setSubject(e.target.value)} type="text" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-primary text-white" placeholder="e.g. History" />
+        <label className="block text-sm text-th-muted mb-1">Subject</label>
+        <input value={subject} onChange={e=>setSubject(e.target.value)} type="text" className="input" placeholder="e.g. History" />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-white/70 mb-1">Exam Date</label>
-          <input value={examDate} onChange={e=>setExamDate(e.target.value)} type="date" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-primary text-white" />
+          <label className="block text-sm text-th-muted mb-1">Exam Date</label>
+          <input value={examDate} onChange={e=>setExamDate(e.target.value)} type="date" className="input" />
         </div>
         <div>
-           <label className="block text-sm text-white/70 mb-1">Daily Hours</label>
-           <input value={dailyHours} onChange={e=>setDailyHours(e.target.value)} type="number" min="1" max="16" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-primary text-white" placeholder="e.g. 2" />
+           <label className="block text-sm text-th-muted mb-1">Daily Hours</label>
+           <input value={dailyHours} onChange={e=>setDailyHours(e.target.value)} type="number" min="1" max="16" className="input" placeholder="e.g. 2" />
         </div>
       </div>
 
       <div>
-         <label className="block text-sm text-white/70 mb-1">Chapters (comma separated)</label>
-         <textarea value={chaptersInput} onChange={e=>setChaptersInput(e.target.value)} rows="3" className="w-full bg-white/5 border border-white/10 rounded-lg p-3 outline-none focus:border-primary text-white resize-none" placeholder="Intro, Chapter 1, Advanced Topics..."></textarea>
+         <label className="block text-sm text-th-muted mb-1">Chapters (comma separated)</label>
+         <textarea value={chaptersInput} onChange={e=>setChaptersInput(e.target.value)} rows="3" className="input resize-none" placeholder="Intro, Chapter 1, Advanced Topics..."></textarea>
       </div>
 
-      <button type="submit" className="w-full py-3 bg-gradient-to-r from-primary to-accent rounded-lg text-white font-semibold hover:scale-[1.02] transition-all">Generate Auto-Schedule</button>
+      <button type="submit" className="btn btn-primary w-full">Generate with Gemini</button>
     </form>
   );
 }

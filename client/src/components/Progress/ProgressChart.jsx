@@ -1,8 +1,16 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function ProgressChart({ data }) {
-  if (!data) return <div className="text-white/50">Loading metrics...</div>;
+  const { isDark } = useContext(ThemeContext);
+
+  if (!data) return <div className="text-th-muted">Loading metrics...</div>;
+
+  const axisColor = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)';
+  const tooltipBg = isDark ? '#1e1b4b' : '#ffffff';
+  const tooltipBorder = isDark ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.1)';
+  const strokeColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
 
   const difficultyData = [
     { name: 'Easy', value: data.easyCount, color: '#14b8a6' },
@@ -12,7 +20,7 @@ export default function ProgressChart({ data }) {
 
   const reviewCompletion = [
     { name: 'Reviewed', value: data.reviewedCards, color: '#a855f7' },
-    { name: 'Unreviewed', value: Math.max(0, data.totalFlashcards - data.reviewedCards), color: 'rgba(255,255,255,0.1)' }
+    { name: 'Unreviewed', value: Math.max(0, data.totalFlashcards - data.reviewedCards), color: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }
   ];
 
   // Map quiz scores into a unified chart
@@ -27,48 +35,48 @@ export default function ProgressChart({ data }) {
       
       {/* Cards Difficulty Breakdown */}
       <div className="glass-card p-6 flex flex-col items-center">
-         <h3 className="text-lg mb-6 font-semibold w-full text-left">Difficulty Focus</h3>
+         <h3 className="text-lg mb-6 font-semibold w-full text-left text-th-text">Difficulty Focus</h3>
          {difficultyData.length > 0 ? (
          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={difficultyData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} stroke="rgba(255,255,255,0.1)">
+              <Pie data={difficultyData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} stroke={strokeColor}>
                 {difficultyData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }}/>
+              <Tooltip contentStyle={{ background: tooltipBg, border: tooltipBorder, borderRadius: '10px', color: isDark ? '#fff' : '#1e1b4b' }}/>
             </PieChart>
          </ResponsiveContainer>
-         ) : <p className="text-white/30 my-auto text-sm">No flashcards rated yet.</p>}
+         ) : <p className="text-th-muted my-auto text-sm">No flashcards rated yet.</p>}
       </div>
 
       {/* Completion Donut */}
       <div className="glass-card p-6 flex flex-col items-center">
-         <h3 className="text-lg mb-6 font-semibold w-full text-left">Deck Review Completion</h3>
+         <h3 className="text-lg mb-6 font-semibold w-full text-left text-th-text">Deck Review Completion</h3>
          {data.totalFlashcards > 0 ? (
          <ResponsiveContainer width="100%" height={200}>
             <PieChart>
-              <Pie data={reviewCompletion} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} stroke="rgba(255,255,255,0.1)">
+              <Pie data={reviewCompletion} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={60} outerRadius={80} stroke={strokeColor}>
                 {reviewCompletion.map((entry, index) => <Cell key={index} fill={entry.color} />)}
               </Pie>
-              <Tooltip contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }}/>
+              <Tooltip contentStyle={{ background: tooltipBg, border: tooltipBorder, borderRadius: '10px', color: isDark ? '#fff' : '#1e1b4b' }}/>
             </PieChart>
          </ResponsiveContainer>
-         ) : <p className="text-white/30 my-auto text-sm">No flashcards generated.</p>}
-         {data.totalFlashcards > 0 && <span className="absolute mt-24 text-2xl font-bold font-heading">{Math.round((data.reviewedCards / data.totalFlashcards)*100)}%</span>}
+         ) : <p className="text-th-muted my-auto text-sm">No flashcards generated.</p>}
+         {data.totalFlashcards > 0 && <span className="absolute mt-24 text-2xl font-bold font-heading text-th-text">{Math.round((data.reviewedCards / data.totalFlashcards)*100)}%</span>}
       </div>
 
        {/* Quiz Scores */}
        <div className="glass-card p-6 md:col-span-2 lg:col-span-1 flex flex-col">
-         <h3 className="text-lg mb-6 font-semibold w-full text-left">Recent Quiz Performance (%)</h3>
+         <h3 className="text-lg mb-6 font-semibold w-full text-left text-th-text">Recent Quiz Performance (%)</h3>
          {quizScores.length > 0 ? (
          <ResponsiveContainer width="100%" height={200}>
             <LineChart data={quizScores}>
-               <XAxis dataKey="name" stroke="rgba(255,255,255,0.3)" tick={{fontSize: 12}} />
-               <YAxis stroke="rgba(255,255,255,0.3)" tick={{fontSize: 12}} />
-               <Tooltip contentStyle={{ background: '#1e1b4b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px' }} />
+               <XAxis dataKey="name" stroke={axisColor} tick={{fontSize: 12}} />
+               <YAxis stroke={axisColor} tick={{fontSize: 12}} />
+               <Tooltip contentStyle={{ background: tooltipBg, border: tooltipBorder, borderRadius: '10px', color: isDark ? '#fff' : '#1e1b4b' }} />
                <Line type="monotone" dataKey="percentage" stroke="#ec4899" strokeWidth={3} dot={{r: 4, fill: '#ec4899'}} />
             </LineChart>
          </ResponsiveContainer>
-         ) : <p className="text-white/30 my-auto text-center text-sm">No quizzes taken yet.</p>}
+         ) : <p className="text-th-muted my-auto text-center text-sm">No quizzes taken yet.</p>}
       </div>
 
     </div>

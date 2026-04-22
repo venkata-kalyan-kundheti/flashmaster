@@ -18,6 +18,30 @@ router.get('/', verifyToken, async (req, res) => {
     progress.mediumCount = flashcards.filter(f => f.difficulty === 'medium').length;
     progress.hardCount = flashcards.filter(f => f.difficulty === 'hard').length;
     progress.reviewedCards = flashcards.filter(f => f.isReviewed).length;
+
+    // Compute topic-level progress
+    const subjects = [...new Set(flashcards.map(f => f.subject))];
+    let completed = 0;
+    let pending = 0;
+    subjects.forEach(sub => {
+      const subCards = flashcards.filter(f => f.subject === sub);
+      const allReviewed = subCards.every(f => f.isReviewed);
+      if (allReviewed) completed++;
+      else pending++;
+    });
+    progress.completedTopics = completed;
+    progress.pendingTopics = pending;
+
+    // Update revision status
+    if (progress.totalFlashcards === 0) {
+      progress.revisionStatus = 'Not Started';
+    } else if (progress.reviewedCards >= progress.totalFlashcards) {
+      progress.revisionStatus = 'Completed';
+    } else if (progress.reviewedCards > 0) {
+      progress.revisionStatus = 'In Progress';
+    } else {
+      progress.revisionStatus = 'Not Started';
+    }
     
     await progress.save();
     res.json(progress);

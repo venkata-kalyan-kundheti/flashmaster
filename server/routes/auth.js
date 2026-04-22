@@ -36,6 +36,11 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // Block disabled users
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Your account has been disabled. Contact admin.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 

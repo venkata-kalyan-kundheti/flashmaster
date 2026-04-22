@@ -11,6 +11,18 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
 
   const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
 
+  // Truncate long answers to a short option label
+  const truncateOption = (text) => {
+    if (!text) return '';
+    // Strip markdown-style bullets, numbering, and extra whitespace
+    const cleaned = text.replace(/^[\s•\-\*\d\.]+/, '').trim();
+    // Take the first sentence or line
+    const firstLine = cleaned.split(/[\n\r]/).filter(l => l.trim())[0] || cleaned;
+    const firstSentence = firstLine.split(/(?<=[.!?])\s/)[0] || firstLine;
+    if (firstSentence.length <= 120) return firstSentence;
+    return firstSentence.slice(0, 117).trimEnd() + '...';
+  };
+
   useEffect(() => {
     if (flashcards.length < 4) return;
     
@@ -57,7 +69,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
   };
 
   if (flashcards.length < 4) {
-    return <div className="text-center p-8 text-white/50">You need at least 4 flashcards in this subject to take a quiz.</div>;
+    return <div className="text-center p-8 text-th-muted">You need at least 4 flashcards in this subject to take a quiz.</div>;
   }
 
   if (isFinished) {
@@ -69,43 +81,43 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
     else if (percentage >= 50) { grade = 'C'; color = 'text-accent'; }
 
     return (
-      <div className="glass-card p-12 text-center max-w-lg mx-auto transform transition-all animate-in fade-in zoom-in">
-        <h2 className="text-3xl font-heading mb-2 text-white">Quiz Completed!</h2>
-        <p className="text-white/60 mb-8">Subject: {subject}</p>
-        <div className={`text-8xl font-bold font-heading mb-6 ${color} drop-shadow-glow`}>{grade}</div>
-        <p className="text-xl mb-8 border-t border-white/10 pt-6">Score: <strong>{score} / {flashcards.length}</strong> ({percentage.toFixed(0)}%)</p>
-        <button onClick={onFinish} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all">Back to Quizzes</button>
+      <div className="glass-card p-12 text-center max-w-lg mx-auto">
+        <h2 className="text-3xl font-heading mb-2 text-th-text">Quiz Completed!</h2>
+        <p className="text-th-muted mb-8">Subject: {subject}</p>
+        <div className={`text-8xl font-bold font-heading mb-6 ${color}`}>{grade}</div>
+        <p className="text-xl mb-8 border-t border-th-border/10 pt-6 text-th-text">Score: <strong>{score} / {flashcards.length}</strong> ({percentage.toFixed(0)}%)</p>
+        <button onClick={onFinish} className="btn btn-secondary">Back to Quizzes</button>
       </div>
     );
   }
 
   return (
     <div className="max-w-3xl mx-auto w-full">
-      <div className="mb-8 flex justify-between items-center text-white/50 text-sm font-semibold tracking-wider">
+      <div className="mb-8 flex justify-between items-center text-th-muted text-sm font-semibold tracking-wider">
         <span className="uppercase">{subject}</span>
         <span>Question {currentQIndex + 1} of {flashcards.length}</span>
       </div>
 
-      <div className="w-full bg-white/5 h-2 rounded-full mb-8 relative overflow-hidden">
-        <div className="absolute top-0 left-0 h-full bg-primary transition-all duration-300" style={{ width: `${((currentQIndex)/flashcards.length)*100}%`}}></div>
+      <div className="w-full bg-th-surface/8 h-2 rounded-full mb-8 relative overflow-hidden">
+        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary to-accent transition-all duration-300 rounded-full" style={{ width: `${((currentQIndex)/flashcards.length)*100}%`}}></div>
       </div>
 
       <div className="glass-card p-10 mb-8 min-h-[200px] flex items-center justify-center">
-        <h2 className="text-3xl font-heading text-center leading-relaxed">{flashcards[currentQIndex]?.question}</h2>
+        <h2 className="text-3xl font-heading text-center leading-relaxed text-th-text">{flashcards[currentQIndex]?.question}</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {options.map((opt, i) => {
-          let btnClass = "bg-white/5 border-white/10 hover:border-primary/50 hover:bg-white/10 text-white/80";
+          let btnClass = "bg-th-surface/5 border-th-border/10 hover:border-primary/50 hover:bg-th-surface/10 text-th-text/80";
           
           if (selectedOpt) {
              const isCorrectChoice = opt === flashcards[currentQIndex].answer;
              if (isCorrectChoice) {
                btnClass = "bg-secondary/20 border-secondary text-secondary shadow-glow-teal";
              } else if (opt === selectedOpt) {
-               btnClass = "bg-red-500/20 border-red-500 text-red-300";
+               btnClass = "bg-red-500/20 border-red-500 text-red-400";
              } else {
-               btnClass = "bg-white/5 border-white/10 text-white/30";
+               btnClass = "bg-th-surface/5 border-th-border/10 text-th-muted/40";
              }
           }
 
@@ -114,9 +126,9 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
               key={i} 
               onClick={() => handleSelect(opt)}
               disabled={!!selectedOpt}
-              className={`p-6 rounded-xl border text-left transition-all duration-300 min-h-[100px] flex items-center line-clamp-3 ${btnClass}`}
+              className={`px-5 py-4 rounded-xl border-[1.5px] text-left transition-all duration-300 flex items-center font-medium text-sm leading-snug ${btnClass}`}
             >
-              {opt}
+              <span className="line-clamp-2">{truncateOption(opt)}</span>
             </button>
           )
         })}

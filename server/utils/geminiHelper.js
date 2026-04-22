@@ -8,6 +8,22 @@ const MODEL_FALLBACKS = [
 ];
   
 
+function extractJsonBlock(responseText) {
+  const cleaned = responseText
+    .replace(/```json/gi, '')
+    .replace(/```/g, '')
+    .trim();
+
+  const startIndex = cleaned.indexOf('{');
+  const endIndex = cleaned.lastIndexOf('}');
+
+  if (startIndex === -1 || endIndex === -1) {
+    throw new Error('Gemini did not return a valid JSON object');
+  }
+
+  return cleaned.substring(startIndex, endIndex + 1);
+}
+
 async function callGeminiWithFallback(prompt) {
   let lastError = null;
 
@@ -42,7 +58,6 @@ async function callGeminiWithFallback(prompt) {
 async function generateFlashcards(text, subject) {
   console.log('geminiHelper: generateFlashcards called');
   console.log('geminiHelper: API key exists:', !!process.env.GEMINI_API_KEY);
-  console.log('geminiHelper: API key starts with:', process.env.GEMINI_API_KEY?.substring(0, 10));
   console.log('geminiHelper: text length:', text.length);
   console.log('geminiHelper: subject:', subject);
 
@@ -50,14 +65,27 @@ async function generateFlashcards(text, subject) {
     throw new Error('GEMINI_API_KEY is not set in environment variables. Add it to your .env file.');
   }
 
-  const prompt = `You are an expert study assistant. Based on the following study material about "${subject || 'the given topic'}", generate exactly 10 flashcards for exam preparation.
+  const prompt = `You are an expert study assistant and professor. Based on the following study material about "${subject}", generate exactly 10 detailed flashcards for exam preparation.
+
+CRITICAL FORMATTING RULES FOR ANSWERS:
+- Each answer MUST be structured as detailed bullet points with sub-points.
+- Use "• " (bullet) for main points. Each main point should be a detailed explanation of 1-2 sentences.
+- Use "  - " (indented dash) for sub-points that expand on the main point with examples, details, or clarifications.
+- Each answer MUST have 5 to 8 main bullet points.
+- Each main point should have 1-3 sub-points where relevant to add depth.
+- Do NOT write short fragment-style points like "No node points to NULL". Instead write full explanatory sentences like "• Unlike singly linked lists, no node in a circular linked list points to NULL, because the last node connects back to the first node, forming a continuous loop."
+- Make every point informative enough that a student can understand the concept just from reading the point.
+- Do NOT write paragraph-style answers. Use the bullet + sub-point structure.
+
+Example answer format:
+"• A linked list is a linear data structure where each element (called a node) contains both data and a reference to the next node in the sequence\\n  - This makes linked lists dynamic in size, unlike arrays which have a fixed size\\n  - Each node is allocated separately in memory, so they don't need contiguous memory blocks\\n• Insertion and deletion operations are highly efficient at O(1) time complexity when done at the head\\n  - This is because only the pointer needs to be updated, unlike arrays where elements must be shifted\\n• Traversal requires O(n) time since you must visit each node sequentially from the head"
 
 IMPORTANT: Return ONLY a raw JSON array. No markdown. No backticks. No explanation. No text before or after. Just the JSON array starting with [ and ending with ].
 
 [
   {
     "question": "What is...",
-    "answer": "The answer is...",
+    "answer": "• Detailed first key point with full explanation\\n  - Supporting sub-detail that adds depth\\n  - Another relevant sub-detail\\n• Detailed second key point explaining the concept clearly\\n  - Example or clarification\\n• Third detailed point with enough context for understanding",
     "difficulty": "easy"
   }
 ]
@@ -114,94 +142,70 @@ async function generateSummary(text, subject) {
     throw new Error('GEMINI_API_KEY is not set in environment variables');
   }
 
-  const prompt = `Summarize this ${subject || 'study material'} in 5 bullet points. Be concise. Return plain text only.\n\n${text.slice(0, 7000)}`;
+  const prompt = `Summarize this ${subject || 'study material'} in 8 bullet points. Be concise. Return plain text only.\n\n${text.slice(0, 7000)}`;
   return await callGeminiWithFallback(prompt);
 }
 
-async function generateRoadmap(resumeText, jobRole) {
-  console.log('geminiHelper: generateRoadmap called');
-  console.log('geminiHelper: resumeText length:', resumeText.length);
-  console.log('geminiHelper: jobRole:', jobRole);
+async function generateStudyPlan(subject, examDate, dailyStudyHours, chapters) {
+  console.log('geminiHelper: generateStudyPlan called');
 
   if (!process.env.GEMINI_API_KEY) {
-    throw new Error('GEMINI_API_KEY is not set in environment variables. Add it to your .env file.');
+    throw new Error('GEMINI_API_KEY is not set in environment variables');
   }
 
-  if (!resumeText || !jobRole) {
-    throw new Error('resumeText and jobRole are required');
-  }
+  const prompt = `You are an expert learning planner.
 
-  const prompt = `You are a career development expert. Analyze the following resume and create a personalized learning roadmap for the target job role.
+Create a practical study schedule for this student:
+- Subject: ${subject}
+- Exam date: ${examDate}
+- Daily study hours: ${dailyStudyHours}
+- Chapters: ${chapters.join(', ')}
 
-Resume Text:
-${resumeText.slice(0, 8000)}
-
-Target Job Role: ${jobRole}
-
-IMPORTANT: Return ONLY valid JSON with this exact structure. No markdown. No backticks. No explanation. Just the JSON object.
-
+Return ONLY a raw JSON object with this exact shape:
 {
-  "skillsExtracted": ["skill1", "skill2", "skill3"],
-  "missingSkills": ["skillA", "skillB", "skillC"],
-  "suggestedProjects": ["project1", "project2", "project3"],
-  "roadmap": "Detailed step-by-step learning plan with timeline",
-  "estimatedTimeframe": "X months",
-  "fitPercentage": 85
+  "chapters": ["Chapter 1", "Chapter 2"],
+  "schedule": [
+    {
+      "date": "YYYY-MM-DD",
+      "tasks": ["Task 1", "Task 2"]
+    }
+  ]
 }
 
-- skillsExtracted: Array of current skills from resume
-- missingSkills: Array of skills needed for the job role but missing from resume
-- suggestedProjects: Array of practical projects to build missing skills
-- roadmap: Comprehensive learning plan with milestones
-- estimatedTimeframe: Realistic time estimate (e.g., "3-6 months")
-- fitPercentage: Number 0-100 indicating current fit for the role`;
+Rules:
+- Use only dates between tomorrow and exam date.
+- tasks must be concise and specific.
+- Include revision tasks near the exam date.
+- Do not use markdown or extra text outside JSON.`;
 
   const responseText = await callGeminiWithFallback(prompt);
-
-  console.log('geminiHelper: roadmap raw response length:', responseText.length);
-  console.log('geminiHelper: roadmap raw response first 300 chars:', responseText.substring(0, 300));
-
-  // Clean the response
-  let cleaned = responseText
-    .replace(/```json/gi, '')
-    .replace(/```/g, '')
-    .trim();
-
-  // Find the JSON object
-  const startIndex = cleaned.indexOf('{');
-  const endIndex = cleaned.lastIndexOf('}');
-
-  if (startIndex === -1 || endIndex === -1) {
-    console.error('geminiHelper: No JSON object found in roadmap response');
-    console.error('geminiHelper: Full response:', responseText);
-    throw new Error('Gemini did not return a valid JSON object for roadmap');
-  }
-
-  const jsonString = cleaned.substring(startIndex, endIndex + 1);
-  console.log('geminiHelper: extracted roadmap JSON length:', jsonString.length);
-
+  const jsonString = extractJsonBlock(responseText);
   const parsed = JSON.parse(jsonString);
-  console.log('geminiHelper: roadmap parsed successfully');
 
-  // Validate required fields
-  const requiredFields = ['skillsExtracted', 'missingSkills', 'suggestedProjects', 'roadmap', 'estimatedTimeframe', 'fitPercentage'];
-  for (const field of requiredFields) {
-    if (!(field in parsed)) {
-      throw new Error(`Roadmap response missing required field: ${field}`);
-    }
+  const normalizedChapters = Array.isArray(parsed.chapters)
+    ? parsed.chapters.filter((c) => typeof c === 'string' && c.trim().length > 0).map((c) => c.trim())
+    : [];
+
+  const normalizedSchedule = Array.isArray(parsed.schedule)
+    ? parsed.schedule
+        .filter((day) => day && typeof day === 'object')
+        .map((day) => ({
+          date: day.date,
+          tasks: Array.isArray(day.tasks)
+            ? day.tasks.filter((task) => typeof task === 'string' && task.trim().length > 0).map((task) => task.trim())
+            : [],
+        }))
+        .filter((day) => day.date && day.tasks.length > 0)
+    : [];
+
+  if (normalizedSchedule.length === 0) {
+    throw new Error('Gemini returned an invalid study plan schedule');
   }
 
-  // Ensure arrays are arrays and fitPercentage is a number
-  if (!Array.isArray(parsed.skillsExtracted) || !Array.isArray(parsed.missingSkills) || !Array.isArray(parsed.suggestedProjects)) {
-    throw new Error('Roadmap response arrays are not properly formatted');
-  }
-
-  if (typeof parsed.fitPercentage !== 'number' || parsed.fitPercentage < 0 || parsed.fitPercentage > 100) {
-    throw new Error('fitPercentage must be a number between 0 and 100');
-  }
-
-  console.log('geminiHelper: returning valid roadmap');
-  return parsed;
+  return {
+    chapters: normalizedChapters,
+    schedule: normalizedSchedule,
+  };
 }
 
-module.exports = { generateFlashcards, generateSummary, generateRoadmap };
+module.exports = { generateFlashcards, generateSummary, generateStudyPlan }; 

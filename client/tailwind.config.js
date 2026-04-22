@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
   content: ['./src/**/*.{js,jsx}', './index.html'],
   theme: {
     extend: {
@@ -13,6 +12,14 @@ export default {
         secondary: '#14b8a6',
         accent: '#ec4899',
         surface: 'rgba(255,255,255,0.05)',
+        // Theme-aware semantic colors (work in both light & dark)
+        th: {
+          text:    'rgb(var(--th-text) / <alpha-value>)',
+          sec:     'rgb(var(--th-text-sec) / <alpha-value>)',
+          muted:   'rgb(var(--th-muted) / <alpha-value>)',
+          surface: 'rgb(var(--th-surface) / <alpha-value>)',
+          border:  'rgb(var(--th-border) / <alpha-value>)',
+        },
       },
       backdropBlur: { glass: '20px' },
       boxShadow: {
