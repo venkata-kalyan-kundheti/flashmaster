@@ -43,7 +43,7 @@ export default function AdminOverview() {
 
   return (
     <div className="min-h-screen p-4 sm:p-8 max-w-7xl mx-auto space-y-8">
-      <Toaster position="top-right" toastOptions={{ style: { background: 'var(--th-tooltip-bg)', backdropFilter: 'blur(10px)', color: 'rgb(var(--th-text))', border: '1px solid var(--th-card-border)' } }} />
+      <Toaster position="top-right" toastOptions={{ style: { background: 'var(--surface)', backdropFilter: 'blur(10px)', color: 'var(--text-primary)', border: '1px solid var(--border)' } }} />
 
       <div>
         <h1 className="text-3xl sm:text-4xl font-heading font-black text-th-text">Platform Overview</h1>

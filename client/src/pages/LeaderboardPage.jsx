@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
-import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function LeaderboardPage() {
   const [leaders, setLeaders] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaders = async () => {
@@ -14,60 +12,76 @@ export default function LeaderboardPage() {
         setLeaders(res.data);
       } catch {
         toast.error('Failed to load leaderboard');
-      } finally {
-        setLoading(false);
       }
     };
     fetchLeaders();
   }, []);
 
-  return (
-    <div className="min-h-screen p-4 sm:p-8 max-w-4xl mx-auto">
-      <h1 className="text-4xl font-heading font-bold mb-2 text-center text-th-text">Trophy Room</h1>
-      <p className="text-th-muted mb-12 text-center">Top 10 students with the highest reviewed cards score.</p>
+  const medals = ['👑', '🥈', '🥉'];
 
-      {loading ? (
-        <LoadingSpinner message="Loading leaderboard..." />
-      ) : (
-      <div className="glass-card overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-th-surface/5 border-b border-th-border/10">
-            <tr>
-              <th className="px-6 py-4 text-xs tracking-widest text-th-muted uppercase font-semibold">Rank</th>
-              <th className="px-6 py-4 text-xs tracking-widest text-th-muted uppercase font-semibold">Student</th>
-              <th className="px-6 py-4 text-xs tracking-widest text-th-muted uppercase font-semibold text-right">Cards Reviewed</th>
+  return (
+    <div className="min-h-screen p-8 max-w-4xl mx-auto">
+      <h1 className="text-4xl font-heading font-bold mb-2 text-center" style={{ color: 'var(--text-primary)' }}>
+        Trophy Room
+      </h1>
+      <p style={{ color: 'var(--text-muted)', marginBottom: '48px', textAlign: 'center', fontSize: '0.95rem' }}>
+        Top 10 students with the highest reviewed cards score.
+      </p>
+
+      <div className="glass-card" style={{ overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+              {['Rank', 'Student', 'Cards Reviewed'].map((h, i) => (
+                <th
+                  key={h}
+                  style={{
+                    padding: '14px 24px',
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    textAlign: i === 2 ? 'right' : 'left',
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-th-border/5">
-            {leaders.map((student, i) => {
-               let crown = '';
-               if (i === 0) crown = '👑';
-               if (i === 1) crown = '🥈';
-               if (i === 2) crown = '🥉';
-
-               return (
-                <tr key={student._id} className="hover:bg-th-surface/5 transition-colors">
-                  <td className="px-6 py-4 text-lg font-heading font-bold text-th-text">
-                     {crown} {i > 2 && `#${i+1}`}
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-th-text">
-                     {student.userId?.name || 'Anonymous User'}
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-primary">
-                     {student.reviewedCards}
-                  </td>
-                </tr>
-               )
-            })}
+          <tbody>
+            {leaders.map((student, i) => (
+              <tr
+                key={student._id}
+                style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface-hover)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <td style={{ padding: '16px 24px', fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  {i < 3 ? medals[i] : `#${i + 1}`}
+                </td>
+                <td style={{ padding: '16px 24px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {student.userId?.name || 'Anonymous User'}
+                </td>
+                <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 700, color: '#8b5cf6', fontSize: '1rem' }}>
+                  {student.reviewedCards}
+                </td>
+              </tr>
+            ))}
             {leaders.length === 0 && (
-                <tr>
-                    <td colSpan="3" className="px-6 py-8 text-center text-th-muted">No rank data available yet.</td>
-                </tr>
+              <tr>
+                <td
+                  colSpan={3}
+                  style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}
+                >
+                  No rank data available yet.
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
-      )}
     </div>
   );
 }

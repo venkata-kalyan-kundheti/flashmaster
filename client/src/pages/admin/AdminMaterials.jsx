@@ -49,7 +49,7 @@ export default function AdminMaterials() {
 
   return (
     <div className="min-h-screen p-4 sm:p-8 max-w-7xl mx-auto space-y-6">
-      <Toaster position="top-right" toastOptions={{ style: { background: 'var(--th-tooltip-bg)', backdropFilter: 'blur(10px)', color: 'rgb(var(--th-text))', border: '1px solid var(--th-card-border)' } }} />
+      <Toaster position="top-right" toastOptions={{ style: { background: 'var(--surface)', backdropFilter: 'blur(10px)', color: 'var(--text-primary)', border: '1px solid var(--border)' } }} />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

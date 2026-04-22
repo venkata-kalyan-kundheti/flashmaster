@@ -1,65 +1,227 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
-/* ── Theme Variables (Dark = default) ── */
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM MIDNIGHT NAVY — Dark Theme (default)
+   Inspired by: Linear, Vercel, Raycast
+   ═══════════════════════════════════════════════════════════════ */
 :root {
-  --th-text: 255 255 255;
-  --th-text-sec: 203 213 225;
-  --th-muted: 148 163 184;
-  --th-surface: 255 255 255;
-  --th-border: 255 255 255;
-  --th-card-bg: rgba(255, 255, 255, 0.05);
-  --th-card-border: rgba(255, 255, 255, 0.1);
-  --th-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
-  --th-input-bg: rgba(255, 255, 255, 0.05);
-  --th-hover-bg: rgba(255, 255, 255, 0.08);
-  --th-tooltip-bg: #1e1b4b;
+  --bg-primary:        #04070f;           /* deep midnight */
+  --bg-secondary:      #080c18;
+  --surface:           rgba(255, 255, 255, 0.045);
+  --surface-hover:     rgba(255, 255, 255, 0.075);
+  --border:            rgba(120, 130, 200, 0.12);
+  --border-focus:      rgba(139, 92, 246, 0.65);
+  --text-primary:      #eef0ff;           /* cool off-white */
+  --text-secondary:    #9da8d8;           /* muted lavender */
+  --text-muted:        rgba(157, 168, 216, 0.55);
+  --input-bg:          rgba(255, 255, 255, 0.055);
+  --input-text:        #eef0ff;
+  --input-placeholder: rgba(157, 168, 216, 0.45);
+  --card-shadow:       0 8px 40px rgba(0, 0, 0, 0.6);
+  --navbar-bg:         rgba(4, 7, 15, 0.82);
+  --badge-bg:          rgba(139, 92, 246, 0.1);
+  --label-color:       #9da8d8;
+  --step-card-bg:      rgba(255, 255, 255, 0.04);
+  --step-card-border:  rgba(120, 130, 200, 0.14);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PREMIUM GLACIAL — Light Theme
+   ═══════════════════════════════════════════════════════════════ */
 body.light {
-  --th-text: 15 23 42;
-  --th-text-sec: 71 85 105;
-  --th-muted: 100 116 139;
-  --th-surface: 0 0 0;
-  --th-border: 0 0 0;
-  --th-card-bg: rgba(255, 255, 255, 0.65);
-  --th-card-border: rgba(0, 0, 0, 0.08);
-  --th-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --th-input-bg: rgba(0, 0, 0, 0.04);
-  --th-hover-bg: rgba(0, 0, 0, 0.04);
-  --th-tooltip-bg: #ffffff;
+  --bg-primary:        #f0f4ff;
+  --bg-secondary:      #e8eeff;
+  --surface:           rgba(255, 255, 255, 0.88);
+  --surface-hover:     rgba(255, 255, 255, 0.98);
+  --border:            rgba(139, 92, 246, 0.14);
+  --border-focus:      rgba(109, 40, 217, 0.55);
+  --text-primary:      #14102b;
+  --text-secondary:    #5046a0;
+  --text-muted:        #8c82c4;
+  --input-bg:          rgba(255, 255, 255, 0.92);
+  --input-text:        #14102b;
+  --input-placeholder: #a199d0;
+  --card-shadow:       0 4px 24px rgba(109, 40, 217, 0.09);
+  --navbar-bg:         rgba(255, 255, 255, 0.88);
+  --badge-bg:          rgba(139, 92, 246, 0.08);
+  --label-color:       #5046a0;
+  --step-card-bg:      rgba(139, 92, 246, 0.04);
+  --step-card-border:  rgba(139, 92, 246, 0.13);
 }
 
-/* ── Base Reset ── */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ─── Base ───────────────────────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   font-family: 'Inter', sans-serif;
-  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  background-color: var(--bg-primary);
+  /* Subtle radial glow accents */
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% -10%,  rgba(109, 40, 217, 0.20) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 85% 85%,   rgba(20, 184, 166, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 10% 60%,   rgba(236, 72, 153, 0.07) 0%, transparent 50%);
   min-height: 100vh;
-  color: rgb(var(--th-text));
+  color: var(--text-primary);
+  transition: background-color 0.35s, color 0.35s;
 }
 
 body.light {
-  background: linear-gradient(135deg, #f8f6ff 0%, #eef2ff 50%, #f0fdf4 100%);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% -10%,  rgba(139, 92, 246, 0.13) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 85% 85%,   rgba(20, 184, 166, 0.07) 0%, transparent 55%);
 }
 
-/* ── Glass Card (theme-aware) ── */
+/* ─── Glass Card ─────────────────────────────────────────────── */
 .glass-card {
-  background: var(--th-card-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--th-card-border);
+  background: var(--surface);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--border);
   border-radius: 20px;
-  box-shadow: var(--th-card-shadow);
+  box-shadow: var(--card-shadow);
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
+
+body.light .glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(139, 92, 246, 0.14);
+  box-shadow: 0 4px 28px rgba(109, 40, 217, 0.09);
+}
+
+/* ─── Theme-aware card for pages that used bg-white ─────────── */
+.theme-card {
+  background: var(--step-card-bg);
+  border: 1px solid var(--step-card-border);
+  border-radius: 16px;
+  padding: 24px;
+}
+body.light .theme-card {
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(139, 92, 246, 0.12);
+  box-shadow: 0 2px 12px rgba(109, 40, 217, 0.06);
+}
+
+/* ─── Global Inputs ──────────────────────────────────────────── */
+input, textarea, select {
+  color: var(--input-text) !important;
+  background: var(--input-bg) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--input-placeholder) !important;
+}
+
+/* ─── 3D Flip Card ───────────────────────────────────────────── */
+.card-scene { perspective: 1200px; }
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.card-inner.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.card-front {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(20, 184, 166, 0.14));
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.card-back {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.22), rgba(236, 72, 153, 0.14));
+  border: 1px solid rgba(20, 184, 166, 0.3);
+  transform: rotateY(180deg);
+}
+
+/* ─── Difficulty Badges ──────────────────────────────────────── */
+.badge-easy   { background: rgba(20,184,166,0.14); color: #5eead4; border: 1px solid rgba(20,184,166,0.3); }
+.badge-medium { background: rgba(245,158,11,0.14); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+.badge-hard   { background: rgba(239,68,68,0.14);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+body.light .badge-easy   { background: rgba(20,184,166,0.10);  color: #0d9488; }
+body.light .badge-medium { background: rgba(234,136,10,0.10);  color: #b45309; }
+body.light .badge-hard   { background: rgba(220,38,38,0.10);   color: #dc2626; }
+
+/* ─── ⚡ Generate with Gemini button ─────────────────────────── */
+.btn-gemini {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: 0.01em;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 50%, #ec4899 100%);
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(109, 40, 217, 0.48), 0 1px 4px rgba(0,0,0,0.25);
+  transition: transform 0.18s, box-shadow 0.18s, filter 0.18s;
+}
+.btn-gemini::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 55%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.btn-gemini:hover  { transform: translateY(-2px) scale(1.03); box-shadow: 0 8px 28px rgba(109,40,217,0.58); filter: brightness(1.08); }
+.btn-gemini:active { transform: translateY(0) scale(0.98); }
+.btn-gemini .gemini-icon { animation: sparkle 2s infinite; }
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50%       { transform: scale(1.28) rotate(15deg); }
+}
+
+/* ─── Delete / Danger button ─────────────────────────────────── */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid rgba(239,68,68,0.28);
+  background: rgba(239,68,68,0.07);
+  color: #f87171;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+}
+.btn-danger:hover  { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #fca5a5; }
+body.light .btn-danger       { border-color: rgba(220,38,38,0.22); background: rgba(220,38,38,0.05); color: #dc2626; }
+body.light .btn-danger:hover { background: rgba(220,38,38,0.11); color: #b91c1c; }
+
+/* ─── Smooth global transitions ─────────────────────────────── */
+body, .glass-card, input, textarea, select, button, a {
+  transition-property: background-color, border-color, box-shadow, color, opacity, transform;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ADMIN PAGE COMPATIBILITY — btn system, input, text-th-* 
+   ═══════════════════════════════════════════════════════════════ */
 
 /* ── Button System ── */
 .btn {
@@ -75,205 +237,59 @@ body.light {
   border: 1.5px solid transparent;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   outline: none;
+  font-family: 'Inter', sans-serif;
 }
-
-.btn:focus-visible {
-  outline: 2px solid #a855f7;
-  outline-offset: 2px;
-}
-
+.btn:focus-visible { outline: 2px solid #a855f7; outline-offset: 2px; }
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
   color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.25);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
 }
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
-}
-
-.btn-primary:active {
-  transform: translateY(0) scale(0.98);
-}
-
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4); }
+.btn-primary:active { transform: translateY(0) scale(0.98); }
 .btn-secondary {
-  background: rgb(var(--th-surface) / 0.06);
-  color: rgb(var(--th-text));
-  border-color: rgb(var(--th-border) / 0.15);
+  background: var(--surface);
+  color: var(--text-primary);
+  border-color: var(--border);
 }
-
-.btn-secondary:hover {
-  background: rgb(var(--th-surface) / 0.12);
-  border-color: #a855f7;
-  color: #a855f7;
-  transform: translateY(-1px);
-}
-
-.btn-secondary:active {
-  transform: translateY(0) scale(0.98);
-}
-
+.btn-secondary:hover { background: var(--surface-hover); border-color: rgba(139,92,246,0.4); color: #a78bfa; transform: translateY(-1px); }
+.btn-secondary:active { transform: translateY(0) scale(0.98); }
 .btn-ghost {
   background: transparent;
-  color: rgb(var(--th-muted));
+  color: var(--text-secondary);
   border-color: transparent;
 }
-
-.btn-ghost:hover {
-  background: rgb(var(--th-surface) / 0.08);
-  color: rgb(var(--th-text));
-}
-
-.btn-danger {
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
-  transform: translateY(-1px);
-}
-
-.btn-pill {
-  border-radius: 9999px;
-}
-
-.btn-sm {
-  padding: 0.375rem 1rem;
-  font-size: 0.8125rem;
-}
-
-.btn-lg {
-  padding: 0.75rem 2rem;
-  font-size: 1rem;
-}
+.btn-ghost:hover { background: var(--surface-hover); color: var(--text-primary); }
+.btn-pill { border-radius: 9999px; }
+.btn-sm { padding: 0.375rem 1rem; font-size: 0.8125rem; }
+.btn-lg { padding: 0.75rem 2rem; font-size: 1rem; }
 
 /* ── Input System ── */
 .input {
   width: 100%;
-  background: var(--th-input-bg);
-  border: 1.5px solid rgb(var(--th-border) / 0.12);
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
   border-radius: 12px;
   padding: 0.75rem 1rem;
-  color: rgb(var(--th-text));
+  color: var(--input-text);
   outline: none;
   font-size: 0.875rem;
   transition: all 0.2s ease;
 }
+.input::placeholder { color: var(--input-placeholder); }
+.input:focus { border-color: rgba(139,92,246,0.65); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15); }
 
-.input::placeholder {
-  color: rgb(var(--th-muted));
-}
-
-.input:focus {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
-}
-
-/* ── 3D Flip Card ── */
-.card-scene {
-  perspective: 1200px;
-}
-
-.card-inner {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-  transform-style: preserve-3d;
-}
-
-.card-inner.flipped {
-  transform: rotateY(180deg);
-}
-
-.card-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  border-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  overflow-y: auto;
-}
-
-.card-front {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(20, 184, 166, 0.2));
-  border: 1px solid rgba(168, 85, 247, 0.4);
-}
-
-.card-back {
-  background: linear-gradient(135deg, rgba(20, 184, 166, 0.3), rgba(236, 72, 153, 0.2));
-  border: 1px solid rgba(20, 184, 166, 0.4);
-  transform: rotateY(180deg);
-}
-
-/* Flip card scrollbar styling */
-.card-face::-webkit-scrollbar {
-  width: 4px;
-}
-
-.card-face::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.card-face::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-}
-
-.card-face::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* ── Difficulty badge colors ── */
-.badge-easy {
-  background: rgba(20, 184, 166, 0.15);
-  color: #14b8a6;
-  border: 1px solid rgba(20, 184, 166, 0.3);
-}
-
-.badge-medium {
-  background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.badge-hard {
-  background: rgba(239, 68, 68, 0.15);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-/* ── Smooth global transitions ── */
-* {
-  transition-property: background-color, border-color, box-shadow, color, opacity;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
-}
+/* ── Admin theme-aware text utilities (th-*) ── */
+.text-th-text      { color: var(--text-primary); }
+.text-th-muted     { color: var(--text-secondary); }
+.border-th-border\/10 { border-color: var(--border); }
+.bg-th-surface\/5  { background: var(--surface); }
+.bg-th-surface\/8  { background: var(--surface); }
+.bg-th-surface\/10 { background: var(--surface); }
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgb(var(--th-muted) / 0.3);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(var(--th-muted) / 0.5);
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(157, 168, 216, 0.25); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(157, 168, 216, 0.45); }
