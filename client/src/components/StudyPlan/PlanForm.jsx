@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
@@ -26,36 +26,34 @@ const labelStyle = {
 };
 
 export default function PlanForm({ onPlanCreated }) {
-  const [subject,       setSubject]       = useState('');
-  const [examDate,      setExamDate]      = useState('');
-  const [dailyHours,    setDailyHours]    = useState('');
-  const [chaptersInput, setChaptersInput] = useState('');
-  const [focus,         setFocus]         = useState({});
+  const [materials, setMaterials] = useState([]);
+  const [materialId, setMaterialId] = useState('');
+  const [examDate, setExamDate] = useState('');
+  const [dailyHours, setDailyHours] = useState('');
+  const [focus, setFocus] = useState({});
 
-  const onF = k => setFocus(f => ({ ...f, [k]: true  }));
+  useEffect(() => {
+    api.get('/materials').then(res => setMaterials(res.data)).catch(() => {});
+  }, []);
+
+  const onF = k => setFocus(f => ({ ...f, [k]: true }));
   const onB = k => setFocus(f => ({ ...f, [k]: false }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!subject || !examDate || !dailyHours || !chaptersInput)
+    if (!materialId || !examDate || !dailyHours)
       return toast.error('Please fill all fields');
 
-    const chapters = chaptersInput
-      .split(',')
-      .map(c => ({ name: c.trim() }))
-      .filter(c => c.name !== '');
-
-    const loadingToast = toast.loading('Generating schedule...');
+    const loadingToast = toast.loading('Reading document & generating schedule...');
     try {
       const res = await api.post('/studyplans', {
-        subject,
+        materialId,
         examDate,
         dailyStudyHours: Number(dailyHours),
-        chapters,
       });
       toast.success('Study Plan Created!', { id: loadingToast });
       onPlanCreated(res.data);
-      setSubject(''); setExamDate(''); setDailyHours(''); setChaptersInput('');
+      setMaterialId(''); setExamDate(''); setDailyHours('');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create plan', { id: loadingToast });
     }
@@ -71,13 +69,17 @@ export default function PlanForm({ onPlanCreated }) {
       </h3>
 
       <div>
-        <label style={labelStyle}>Subject</label>
-        <input
-          value={subject} onChange={e => setSubject(e.target.value)}
-          type="text" placeholder="e.g. History"
-          style={fieldStyle(focus.s)}
-          onFocus={() => onF('s')} onBlur={() => onB('s')}
-        />
+        <label style={labelStyle}>Select Document</label>
+        <select
+          value={materialId} onChange={e => setMaterialId(e.target.value)}
+          style={fieldStyle(focus.m)}
+          onFocus={() => onF('m')} onBlur={() => onB('m')}
+        >
+          <option value="" disabled>-- Choose an uploaded material --</option>
+          {materials.map(m => (
+            <option key={m._id} value={m._id}>{m.title} ({m.subject})</option>
+          ))}
+        </select>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -101,15 +103,7 @@ export default function PlanForm({ onPlanCreated }) {
         </div>
       </div>
 
-      <div>
-        <label style={labelStyle}>Chapters (comma separated)</label>
-        <textarea
-          value={chaptersInput} onChange={e => setChaptersInput(e.target.value)}
-          rows="3" placeholder="Intro, Chapter 1, Advanced Topics..."
-          style={{ ...fieldStyle(focus.c), resize: 'none' }}
-          onFocus={() => onF('c')} onBlur={() => onB('c')}
-        />
-      </div>
+
 
       <button
         type="submit"

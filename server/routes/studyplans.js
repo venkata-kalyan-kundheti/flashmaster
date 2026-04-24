@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/auth');
 const StudyPlan = require('../models/StudyPlan');
+const Material = require('../models/Material');
+const fs = require('fs');
+const { extractTextFromPDF } = require('../utils/pdfParser');
+const { extractTextFromImage } = require('../utils/ocrHelper');
 const { generateStudyPlan } = require('../utils/geminiHelper');
 
 router.get('/', verifyToken, async (req, res) => {
@@ -15,17 +19,14 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.post('/', verifyToken, async (req, res) => {
   try {
-    const { subject, examDate, dailyStudyHours, chapters } = req.body;
-    if (!subject || !examDate || !dailyStudyHours || !Array.isArray(chapters) || chapters.length === 0) {
-      return res.status(400).json({ message: 'subject, examDate, dailyStudyHours and chapters are required' });
+    const { examDate, dailyStudyHours, materialId } = req.body;
+    if (!materialId || !examDate || !dailyStudyHours) {
+      return res.status(400).json({ message: 'materialId, examDate, and dailyStudyHours are required' });
     }
 
-    const chapterNames = chapters
-      .map((c) => (typeof c?.name === 'string' ? c.name.trim() : ''))
-      .filter(Boolean);
-
-    if (chapterNames.length === 0) {
-      return res.status(400).json({ message: 'At least one valid chapter is required' });
+    const material = await Material.findOne({ _id: materialId, userId: req.user.id });
+    if (!material) {
+      return res.status(404).json({ message: 'Material not found' });
     }
 
     const start = new Date();
@@ -37,9 +38,30 @@ router.post('/', verifyToken, async (req, res) => {
       return res.status(400).json({ message: 'Exam date must be in the future' });
     }
 
-    const aiPlan = await generateStudyPlan(subject, examDate, Number(dailyStudyHours), chapterNames);
+    const filePath = material.fileUrl;
+    if (!fs.existsSync(filePath)) {
+      return res.status(400).json({ message: 'Material file not found on server' });
+    }
 
-    const normalizedChapters = (aiPlan.chapters.length > 0 ? aiPlan.chapters : chapterNames).map((name) => ({
+    let text = '';
+    if (material.fileType === 'pdf') {
+      text = await extractTextFromPDF(filePath);
+    } else if (material.fileType === 'image') {
+      text = await extractTextFromImage(filePath);
+    } else if (material.fileType === 'text') {
+      text = fs.readFileSync(filePath, 'utf8');
+      text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n\n\n+/g, '\n\n').slice(0, 15000);
+    } else {
+      return res.status(400).json({ message: 'Unsupported file type for study plan generation' });
+    }
+
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ message: 'Could not extract text from the material.' });
+    }
+
+    const aiPlan = await generateStudyPlan(material.subject, examDate, Number(dailyStudyHours), text);
+
+    const normalizedChapters = aiPlan.chapters.map((name) => ({
       name,
       isCompleted: false,
     }));
@@ -56,7 +78,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     const plan = new StudyPlan({
       userId: req.user.id,
-      subject,
+      subject: material.subject,
       examDate,
       dailyStudyHours: Number(dailyStudyHours),
       chapters: normalizedChapters,

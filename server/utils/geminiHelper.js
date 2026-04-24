@@ -146,37 +146,44 @@ async function generateSummary(text, subject) {
   return await callGeminiWithFallback(prompt);
 }
 
-async function generateStudyPlan(subject, examDate, dailyStudyHours, chapters) {
+async function generateStudyPlan(subject, examDate, dailyStudyHours, documentText) {
   console.log('geminiHelper: generateStudyPlan called');
 
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY is not set in environment variables');
   }
 
+  const today = new Date().toISOString().split('T')[0];
+
   const prompt = `You are an expert learning planner.
 
-Create a practical study schedule for this student:
+Analyze the following study material text and create a practical study schedule for this student:
 - Subject: ${subject}
+- Current Date: ${today}
 - Exam date: ${examDate}
 - Daily study hours: ${dailyStudyHours}
-- Chapters: ${chapters.join(', ')}
 
 Return ONLY a raw JSON object with this exact shape:
 {
-  "chapters": ["Chapter 1", "Chapter 2"],
+  "chapters": ["Topic 1 (X hours)", "Topic 2 (Y hours)"],
   "schedule": [
     {
       "date": "YYYY-MM-DD",
-      "tasks": ["Task 1", "Task 2"]
+      "tasks": ["Read Topic 1 for X hours", "Practice questions"]
     }
   ]
 }
 
 Rules:
-- Use only dates between tomorrow and exam date.
-- tasks must be concise and specific.
+- Generate a schedule starting from ${today} up to the exam date (${examDate}).
+- Make sure there is a sequential progression of days. Do NOT skip months or years.
+- tasks must be concise and specific, indicating how much time to spend based on the document's topics.
 - Include revision tasks near the exam date.
-- Do not use markdown or extra text outside JSON.`;
+- Do not use markdown or extra text outside JSON.
+
+Study Material Document Text:
+${documentText.slice(0, 15000)}
+`;
 
   const responseText = await callGeminiWithFallback(prompt);
   const jsonString = extractJsonBlock(responseText);
