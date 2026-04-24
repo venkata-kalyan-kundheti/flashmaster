@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import renderFormattedText from '../utils/renderFormattedText';
 import { Toaster } from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const toastStyle = {
   style: {
@@ -47,8 +49,8 @@ export default function Flashcards() {
   const [activeSubject, setActiveSubject]       = useState(null);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped]               = useState(false);
-  const [difficulty, setDifficulty]             = useState({});
   const [reviewedIds, setReviewedIds]           = useState(new Set());
+  const [loading, setLoading]                   = useState(true);
 
   /* Turn animation state */
   const [animating, setAnimating]   = useState(false);
@@ -75,10 +77,21 @@ export default function Flashcards() {
         })));
       } catch {
         toast.error('Failed to load flashcards');
+      } finally {
+        setLoading(false);
       }
     };
     fetchCards();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-5xl mx-auto">
+        <Toaster position="top-right" toastOptions={toastStyle} />
+        <LoadingSpinner message="Loading flashcards..." />
+      </div>
+    );
+  }
 
   const subjectCards = activeSubject ? flashcards.filter(f => f.subject === activeSubject) : [];
   const currentCard  = subjectCards[displayIdx];
@@ -87,7 +100,10 @@ export default function Flashcards() {
     if (!currentCard) return;
     try {
       await api.patch(`/flashcards/${currentCard._id}/difficulty`, { difficulty: newDifficulty });
-      setDifficulty(prev => ({ ...prev, [currentCard._id]: newDifficulty }));
+      // Update the flashcards array directly so currentCard.difficulty reflects the change
+      setFlashcards(prev => prev.map(fc =>
+        fc._id === currentCard._id ? { ...fc, difficulty: newDifficulty } : fc
+      ));
       toast.success(`Marked as ${newDifficulty}!`);
     } catch {
       toast.error('Failed to update difficulty');
@@ -201,9 +217,31 @@ export default function Flashcards() {
         ← Back to Subjects
       </button>
 
-      <div style={{ marginBottom: '24px' }}>
-        <h1 className="text-3xl font-heading font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{activeSubject}</h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Card {displayIdx + 1} of {subjectCards.length}</p>
+      <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <h1 className="text-3xl font-heading font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{activeSubject}</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Card {displayIdx + 1} of {subjectCards.length}</p>
+        </div>
+        {currentCard?.difficulty && (
+          <span style={{
+            padding: '5px 14px',
+            borderRadius: '10px',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            textTransform: 'capitalize',
+            background: currentCard.difficulty === 'easy' ? 'rgba(20,184,166,0.15)' :
+                         currentCard.difficulty === 'hard' ? 'rgba(239,68,68,0.15)' :
+                         'rgba(234,179,8,0.15)',
+            color: currentCard.difficulty === 'easy' ? '#5eead4' :
+                   currentCard.difficulty === 'hard' ? '#f87171' :
+                   '#fbbf24',
+            border: `1px solid ${currentCard.difficulty === 'easy' ? 'rgba(20,184,166,0.3)' :
+                                  currentCard.difficulty === 'hard' ? 'rgba(239,68,68,0.3)' :
+                                  'rgba(234,179,8,0.3)'}`,
+          }}>
+            {currentCard.difficulty === 'easy' ? '🟢' : currentCard.difficulty === 'hard' ? '🔴' : '🟡'} {currentCard.difficulty}
+          </span>
+        )}
       </div>
 
       {/* Progress Bar */}
@@ -217,93 +255,166 @@ export default function Flashcards() {
         }} />
       </div>
 
-      {/* ── 3D Turning Flashcard ────────────────────────────── */}
-      <div
-        style={{ perspective: '1400px', marginBottom: '24px' }}
-      >
-        {/* Navigation turn animation wrapper */}
-        <div
-          ref={cardRef}
+      {/* ── Layout: ← Card → with nav buttons on sides ──────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+
+        {/* Left Nav Button */}
+        <button
+          onClick={handlePrev}
+          disabled={displayIdx === 0 || animating}
           style={{
-            minHeight: '380px',
-            transformOrigin: 'center center',
-            willChange: 'transform',
-            ...animStyle,
+            flexShrink: 0,
+            width: '50px',
+            height: '50px',
+            borderRadius: '14px',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            backdropFilter: 'blur(12px)',
+            color: displayIdx === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+            cursor: displayIdx === 0 || animating ? 'not-allowed' : 'pointer',
+            opacity: displayIdx === 0 ? 0.3 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.4rem',
+            transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',
           }}
+          onMouseEnter={e => { if (displayIdx > 0 && !animating) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)'; e.currentTarget.style.background = 'rgba(139,92,246,0.12)'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(139,92,246,0.2)'; e.currentTarget.style.transform = 'scale(1.08)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.boxShadow = '0 2px 12px rgba(0,0,0,0.15)'; e.currentTarget.style.transform = 'scale(1)'; }}
         >
-          {/* Flip wrapper */}
+          ←
+        </button>
+
+        {/* Card */}
+        <div style={{ flex: 1, minWidth: 0, perspective: '1400px' }}>
           <div
-            className={`card-inner ${isFlipped ? 'flipped' : ''}`}
-            onClick={() => {
-              if (animating) return;
-              const willFlip = !isFlipped;
-              setIsFlipped(willFlip);
-              if (willFlip && currentCard) {
-                markAsReviewed(currentCard._id);
-              }
-            }}
+            ref={cardRef}
             style={{
-              cursor: animating ? 'default' : 'pointer',
-              width: '100%',
-              height: '100%',
-              position: 'relative',
-              minHeight: '380px'
+              minHeight: '420px',
+              transformOrigin: 'center center',
+              willChange: 'transform',
+              ...animStyle,
             }}
           >
-            {/* FRONT FACE (Question) */}
             <div
-              className="card-face glass-card"
+              className={`card-inner ${isFlipped ? 'flipped' : ''}`}
+              onClick={() => {
+                if (animating) return;
+                const willFlip = !isFlipped;
+                setIsFlipped(willFlip);
+                if (willFlip && currentCard) {
+                  markAsReviewed(currentCard._id);
+                }
+              }}
               style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: '40px',
-                borderColor: 'rgba(139,92,246,0.25)',
+                cursor: animating ? 'default' : 'pointer',
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                minHeight: '420px',
               }}
             >
-              <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                ❓ Question
-              </p>
-              <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                {currentCard?.question}
-              </h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
-                {animating ? '' : 'Click to flip'}
-              </p>
-            </div>
+              {/* FRONT FACE (Question) */}
+              <div
+                className="card-face glass-card"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  padding: '32px 28px',
+                  borderColor: 'rgba(139,92,246,0.25)',
+                }}
+              >
+                <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
+                  ❓ Question
+                </p>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', overflow: 'hidden' }}>
+                  <h2 className="font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4, fontSize: 'clamp(1.1rem, 3vw, 1.8rem)' }}>
+                    {currentCard?.question}
+                  </h2>
+                </div>
+                <p style={{ color: 'var(--text-muted)', marginTop: '16px', fontSize: '0.8rem' }}>
+                  {animating ? '' : 'Click to flip'}
+                </p>
+              </div>
 
-            {/* BACK FACE (Answer) */}
-            <div
-              className="card-face glass-card"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center',
-                padding: '40px',
-                borderColor: 'rgba(20,184,166,0.35)',
-                transform: 'rotateY(180deg)',
-              }}
-            >
-              <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                📝 Answer
-              </p>
-              <h2 className="text-3xl font-heading font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1.4 }}>
-                {currentCard?.answer}
-              </h2>
-              <p style={{ color: 'var(--text-muted)', marginTop: '24px', fontSize: '0.8rem' }}>
-                {animating ? '' : 'Click to flip back'}
-              </p>
+              {/* BACK FACE (Answer) */}
+              <div
+                className="card-face glass-card"
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: '24px 28px',
+                  borderColor: 'rgba(20,184,166,0.35)',
+                  transform: 'rotateY(180deg)',
+                  overflow: 'hidden',
+                }}
+              >
+                <p style={{ fontSize: '0.75rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a78bfa', marginBottom: '12px', fontWeight: 700, flexShrink: 0 }}>
+                  ✦ Answer
+                </p>
+
+                {/* Scrollable answer content */}
+                <div
+                  style={{
+                    flex: 1,
+                    width: '100%',
+                    overflowY: 'auto',
+                    minHeight: 0,
+                    paddingRight: '6px',
+                    scrollbarWidth: 'thin',
+                    scrollbarColor: 'rgba(167, 139, 250, 0.35) transparent',
+                  }}
+                  className="flashcard-answer-scroll"
+                  onClick={e => e.stopPropagation()}
+                  onWheel={e => e.stopPropagation()}
+                >
+                  {currentCard && renderFormattedText(currentCard.answer)}
+                </div>
+
+                <p style={{ color: 'var(--text-muted)', marginTop: '12px', fontSize: '0.8rem', flexShrink: 0 }}>
+                  {animating ? '' : 'Click to flip'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Right Nav Button */}
+        <button
+          onClick={handleNext}
+          disabled={displayIdx === subjectCards.length - 1 || animating}
+          style={{
+            flexShrink: 0,
+            width: '50px',
+            height: '50px',
+            borderRadius: '14px',
+            border: 'none',
+            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+            color: '#fff',
+            cursor: displayIdx === subjectCards.length - 1 || animating ? 'not-allowed' : 'pointer',
+            opacity: displayIdx === subjectCards.length - 1 ? 0.3 : 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.4rem',
+            fontWeight: 700,
+            transition: 'all 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+            boxShadow: '0 4px 16px rgba(139,92,246,0.35)',
+          }}
+          onMouseEnter={e => { if (displayIdx < subjectCards.length - 1 && !animating) { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(139,92,246,0.5)'; } }}
+          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.35)'; }}
+        >
+          →
+        </button>
       </div>
 
       {/* Difficulty Controls */}
@@ -312,7 +423,7 @@ export default function Flashcards() {
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           {['easy', 'medium', 'hard'].map(d => {
             const c        = diffColors[d];
-            const isActive = difficulty[currentCard?._id] === d;
+            const isActive = currentCard?.difficulty === d;
             return (
               <button
                 key={d}
@@ -334,54 +445,6 @@ export default function Flashcards() {
             );
           })}
         </div>
-      </div>
-
-      {/* Navigation */}
-      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-        <button
-          onClick={handlePrev}
-          disabled={displayIdx === 0 || animating}
-          style={{
-            padding: '10px 28px',
-            borderRadius: '12px',
-            border: '1px solid var(--border)',
-            background: 'var(--surface)',
-            color: 'var(--text-primary)',
-            fontWeight: 600,
-            cursor: displayIdx === 0 || animating ? 'not-allowed' : 'pointer',
-            opacity: displayIdx === 0 ? 0.35 : 1,
-            transition: 'all 0.18s',
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '0.95rem',
-          }}
-          onMouseEnter={e => { if (displayIdx > 0 && !animating) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)'; } }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-        >
-          ← Previous
-        </button>
-
-        <button
-          onClick={handleNext}
-          disabled={displayIdx === subjectCards.length - 1 || animating}
-          style={{
-            padding: '10px 28px',
-            borderRadius: '12px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-            color: '#fff',
-            fontWeight: 700,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
-            fontSize: '0.95rem',
-            cursor: displayIdx === subjectCards.length - 1 || animating ? 'not-allowed' : 'pointer',
-            opacity: displayIdx === subjectCards.length - 1 ? 0.35 : 1,
-            boxShadow: '0 4px 16px rgba(139,92,246,0.35)',
-            transition: 'all 0.18s',
-          }}
-          onMouseEnter={e => { if (displayIdx < subjectCards.length - 1 && !animating) { e.currentTarget.style.transform = 'scale(1.04)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(139,92,246,0.5)'; } }}
-          onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.35)'; }}
-        >
-          Next →
-        </button>
       </div>
     </div>
   );

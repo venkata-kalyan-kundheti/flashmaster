@@ -5,28 +5,28 @@
 @import 'tailwindcss/utilities';
 
 /* ═══════════════════════════════════════════════════════════════
-   PREMIUM MIDNIGHT NAVY — Dark Theme (default)
-   Inspired by: Linear, Vercel, Raycast
+   PREMIUM DARK NAVY — Dark Theme (default)
+   Inspired by: Linear, Notion Dark, Raycast
    ═══════════════════════════════════════════════════════════════ */
 :root {
-  --bg-primary:        #04070f;           /* deep midnight */
-  --bg-secondary:      #080c18;
-  --surface:           rgba(255, 255, 255, 0.045);
-  --surface-hover:     rgba(255, 255, 255, 0.075);
-  --border:            rgba(120, 130, 200, 0.12);
+  --bg-primary:        #0f1729;           /* refined dark navy */
+  --bg-secondary:      #131d35;
+  --surface:           rgba(255, 255, 255, 0.06);
+  --surface-hover:     rgba(255, 255, 255, 0.09);
+  --border:            rgba(140, 150, 210, 0.15);
   --border-focus:      rgba(139, 92, 246, 0.65);
   --text-primary:      #eef0ff;           /* cool off-white */
-  --text-secondary:    #9da8d8;           /* muted lavender */
-  --text-muted:        rgba(157, 168, 216, 0.55);
-  --input-bg:          rgba(255, 255, 255, 0.055);
+  --text-secondary:    #a3b0e0;           /* soft lavender */
+  --text-muted:        rgba(163, 176, 224, 0.55);
+  --input-bg:          rgba(255, 255, 255, 0.065);
   --input-text:        #eef0ff;
-  --input-placeholder: rgba(157, 168, 216, 0.45);
-  --card-shadow:       0 8px 40px rgba(0, 0, 0, 0.6);
-  --navbar-bg:         rgba(4, 7, 15, 0.82);
-  --badge-bg:          rgba(139, 92, 246, 0.1);
-  --label-color:       #9da8d8;
-  --step-card-bg:      rgba(255, 255, 255, 0.04);
-  --step-card-border:  rgba(120, 130, 200, 0.14);
+  --input-placeholder: rgba(163, 176, 224, 0.45);
+  --card-shadow:       0 8px 40px rgba(0, 0, 0, 0.4);
+  --navbar-bg:         rgba(15, 23, 41, 0.88);
+  --badge-bg:          rgba(139, 92, 246, 0.12);
+  --label-color:       #a3b0e0;
+  --step-card-bg:      rgba(255, 255, 255, 0.045);
+  --step-card-border:  rgba(140, 150, 210, 0.16);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -61,9 +61,9 @@ body {
   background-color: var(--bg-primary);
   /* Subtle radial glow accents */
   background-image:
-    radial-gradient(ellipse 70% 50% at 50% -10%,  rgba(109, 40, 217, 0.20) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 35% at 85% 85%,   rgba(20, 184, 166, 0.10) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 30% at 10% 60%,   rgba(236, 72, 153, 0.07) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 50% at 50% -10%,  rgba(109, 40, 217, 0.15) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 85% 85%,   rgba(20, 184, 166, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 30% at 10% 60%,   rgba(236, 72, 153, 0.05) 0%, transparent 50%);
   min-height: 100vh;
   color: var(--text-primary);
   transition: background-color 0.35s, color 0.35s;
@@ -115,7 +115,12 @@ input::placeholder, textarea::placeholder {
 }
 
 /* ─── 3D Flip Card ───────────────────────────────────────────── */
-.card-scene { perspective: 1200px; }
+.card-scene {
+  perspective: 1200px;
+  width: 100%;
+  height: 420px;
+  cursor: pointer;
+}
 .card-inner {
   position: relative;
   width: 100%;
@@ -134,8 +139,9 @@ input::placeholder, textarea::placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  justify-content: flex-start;
+  padding: 1.5rem 1.75rem;
+  overflow: hidden;
 }
 .card-front {
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.22), rgba(20, 184, 166, 0.14));
@@ -145,6 +151,230 @@ input::placeholder, textarea::placeholder {
   background: linear-gradient(135deg, rgba(20, 184, 166, 0.22), rgba(236, 72, 153, 0.14));
   border: 1px solid rgba(20, 184, 166, 0.3);
   transform: rotateY(180deg);
+}
+
+/* Card content elements */
+.card-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #a78bfa;
+  margin-bottom: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.card-question-text {
+  font-size: 1.1rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.55;
+  color: #eef0ff;
+}
+.card-hint {
+  margin-top: auto;
+  padding-top: 8px;
+  font-size: 0.75rem;
+  color: rgba(238, 240, 255, 0.35);
+  flex-shrink: 0;
+}
+
+/* Scrollable content area inside card faces */
+.card-content-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  display: block;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(167, 139, 250, 0.35) transparent;
+}
+.card-content-scroll::-webkit-scrollbar { width: 5px; }
+.card-content-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+.card-content-scroll::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+}
+.card-content-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(167, 139, 250, 0.55);
+}
+
+/* Answer area — left-aligned for bullet readability */
+.card-answer-area {
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding-top: 4px;
+}
+.card-answer-area p,
+.card-answer-area ul,
+.card-answer-area li {
+  color: #eef0ff;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  text-align: left;
+}
+.card-answer-area ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+.card-answer-area li {
+  margin-bottom: 6px;
+}
+
+/* Card badges row */
+.card-badges {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-top: 12px;
+}
+.card-badge-btn {
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.card-voice-btn {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: rgba(238, 240, 255, 0.5);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.18s;
+  flex-shrink: 0;
+}
+
+/* ─── Deck View Layout ──────────────────────────────────────── */
+.deck-view-container {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.deck-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 14px;
+  padding: 0 60px;
+}
+.deck-view-counter {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.deck-view-difficulty {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: var(--badge-bg);
+  border: 1px solid var(--border);
+}
+
+/* Main row: prev btn | card | next btn */
+.deck-view-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+.deck-view-card-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Navigation buttons — professional glassmorphic style */
+.deck-nav-btn {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+.deck-nav-btn:hover:not(.deck-nav-btn--disabled) {
+  border-color: rgba(139, 92, 246, 0.5);
+  color: var(--text-primary);
+  background: rgba(139, 92, 246, 0.12);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.2);
+  transform: scale(1.08);
+}
+.deck-nav-btn:active:not(.deck-nav-btn--disabled) {
+  transform: scale(0.95);
+}
+.deck-nav-btn--disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Dot indicators */
+.deck-view-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 24px;
+}
+.deck-dot {
+  height: 7px;
+  width: 7px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.25s;
+  background: var(--border);
+}
+.deck-dot--active {
+  width: 22px;
+  background: #8b5cf6;
+  box-shadow: 0 0 8px rgba(139, 92, 246, 0.5);
+}
+
+/* Light mode overrides */
+body.light .card-front {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(20, 184, 166, 0.08));
+  border-color: rgba(139, 92, 246, 0.2);
+}
+body.light .card-back {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.12), rgba(236, 72, 153, 0.08));
+  border-color: rgba(20, 184, 166, 0.2);
+}
+body.light .card-question-text,
+body.light .card-answer-area p,
+body.light .card-answer-area ul,
+body.light .card-answer-area li { color: var(--text-primary); }
+body.light .card-label { color: #7c3aed; }
+body.light .card-hint { color: rgba(20, 16, 43, 0.35); }
+body.light .card-voice-btn { color: rgba(20, 16, 43, 0.45); }
+body.light .card-content-scroll::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.25); }
+
+/* Responsive: stack arrows below on very small screens */
+@media (max-width: 540px) {
+  .deck-view-main { gap: 8px; }
+  .deck-nav-btn { width: 40px; height: 40px; border-radius: 12px; }
+  .card-scene { height: 380px; }
+  .deck-view-header { padding: 0 50px; }
 }
 
 /* ─── Difficulty Badges ──────────────────────────────────────── */
@@ -293,3 +523,14 @@ body, .glass-card, input, textarea, select, button, a {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(157, 168, 216, 0.25); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(157, 168, 216, 0.45); }
+
+/* ── Flashcard Answer Scrollbar ── */
+.flashcard-answer-scroll::-webkit-scrollbar { width: 5px; }
+.flashcard-answer-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+.flashcard-answer-scroll::-webkit-scrollbar-thumb {
+  background: rgba(167, 139, 250, 0.3);
+  border-radius: 10px;
+}
+.flashcard-answer-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(167, 139, 250, 0.55);
+}

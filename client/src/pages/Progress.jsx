@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import ProgressChart from '../components/Progress/ProgressChart';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const statCards = [
   { label: 'Total Cards',   key: d => d?.totalFlashcards || 0,                                             color: 'var(--text-primary)',   accent: null },
@@ -11,6 +12,7 @@ const statCards = [
 
 export default function Progress() {
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -18,8 +20,17 @@ export default function Progress() {
         const res = await api.get('/progress');
         setData(res.data);
       } catch { console.error('Failed to grab progress data'); }
+      finally { setLoading(false); }
     })();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-6xl mx-auto">
+        <LoadingSpinner message="Loading your progress..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-8 max-w-6xl mx-auto">

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
 import QuizMode from '../components/Flashcard/QuizMode';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Quiz() {
   const [flashcards, setFlashcards]       = useState([]);
   const [subjects, setSubjects]           = useState([]);
   const [activeSubject, setActiveSubject] = useState(null);
+  const [loading, setLoading]             = useState(true);
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -21,6 +23,8 @@ export default function Quiz() {
         })));
       } catch {
         toast.error('Failed to load flashcards');
+      } finally {
+        setLoading(false);
       }
     };
     fetchCards();
@@ -34,6 +38,14 @@ export default function Quiz() {
           flashcards={flashcards.filter(f => f.subject === activeSubject)}
           onFinish={() => setActiveSubject(null)}
         />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-5xl mx-auto">
+        <LoadingSpinner message="Loading quizzes..." />
       </div>
     );
   }

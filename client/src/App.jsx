@@ -10,7 +10,7 @@ import Progress from './pages/Progress';
 import Quiz from './pages/Quiz';
 import StudentHome from './pages/StudentHome';
 import LeaderboardPage from './pages/LeaderboardPage';
-import ResumeRoadmap from './pages/ResumeRoadmap';
+import Profile from './pages/Profile';
 import Navbar from './components/Layout/Navbar';
 import AdminNavbar from './components/Layout/AdminNavbar';
 import AdminOverview from './pages/admin/AdminOverview';
@@ -61,7 +61,7 @@ function App() {
             <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
             <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
-            <Route path="/resume-roadmap" element={<ProtectedRoute><ResumeRoadmap /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />

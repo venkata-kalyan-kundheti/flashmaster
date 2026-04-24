@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import NotificationBell from '../Notifications/NotificationBell';
-import { Sun, Moon, LogOut } from 'lucide-react';
+import { Sun, Moon, LogOut, UserCircle } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -21,7 +21,6 @@ export default function Navbar() {
     { name: 'Flashcards',     path: '/flashcards'     },
     { name: 'Quizzes',        path: '/quiz'           },
     { name: 'Study Plan',     path: '/studyplan'      },
-    { name: 'Resume Roadmap', path: '/resume-roadmap' },
     { name: 'Progress',       path: '/progress'       },
     { name: 'Leaderboard',    path: '/leaderboard'    },
   ];
@@ -144,6 +143,37 @@ export default function Navbar() {
             >
               {user.name}
             </span>
+            <button
+              onClick={() => navigate('/profile')}
+              style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                border: '2px solid rgba(139,92,246,0.3)',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 800,
+                fontSize: '0.8rem',
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                transition: 'all 0.2s',
+                boxShadow: '0 2px 10px rgba(139,92,246,0.25)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.transform = 'scale(1.12)';
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(139,92,246,0.45)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 2px 10px rgba(139,92,246,0.25)';
+              }}
+              title="My Profile"
+            >
+              {user.name?.charAt(0)?.toUpperCase() || 'U'}
+            </button>
             <button
               onClick={handleLogout}
               style={{

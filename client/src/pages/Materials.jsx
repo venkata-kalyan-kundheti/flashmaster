@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useDropzone } from 'react-dropzone';
 import toast, { Toaster } from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Materials() {
   const [materials, setMaterials] = useState([]);
@@ -9,6 +10,7 @@ export default function Materials() {
   const [topic, setTopic]         = useState('');
   const [title, setTitle]         = useState('');
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading]     = useState(true);
 
   const formatFileSize = (bytes) => {
     if (typeof bytes !== 'number') return '0.00 MB';
@@ -22,6 +24,8 @@ export default function Materials() {
       setMaterials(res.data);
     } catch {
       toast.error('Failed to load materials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,6 +87,15 @@ export default function Materials() {
       toast.error('Failed to delete material');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-5xl mx-auto">
+        <Toaster position="top-right" toastOptions={{ style: { background: 'var(--surface)', backdropFilter: 'blur(12px)', color: 'var(--text-primary)', border: '1px solid var(--border)', borderRadius: '14px' } }} />
+        <LoadingSpinner message="Loading materials..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-8 max-w-5xl mx-auto">

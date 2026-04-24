@@ -3,9 +3,11 @@ import api from '../utils/api';
 import PlanForm from '../components/StudyPlan/PlanForm';
 import PlanCalendar from '../components/StudyPlan/PlanCalendar';
 import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StudyPlan() {
   const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchPlans = async () => {
     try {
@@ -13,6 +15,8 @@ export default function StudyPlan() {
       setPlans(res.data);
     } catch {
       toast.error('Failed to load plans');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,6 +41,14 @@ export default function StudyPlan() {
       toast.error('Failed to delete plan');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-6xl mx-auto">
+        <LoadingSpinner message="Loading study plans..." />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen p-8 max-w-6xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>

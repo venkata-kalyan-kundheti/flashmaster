@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function LeaderboardPage() {
   const [leaders, setLeaders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchLeaders = async () => {
@@ -12,10 +14,20 @@ export default function LeaderboardPage() {
         setLeaders(res.data);
       } catch {
         toast.error('Failed to load leaderboard');
+      } finally {
+        setLoading(false);
       }
     };
     fetchLeaders();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen p-8 max-w-4xl mx-auto">
+        <LoadingSpinner message="Loading leaderboard..." />
+      </div>
+    );
+  }
 
   const medals = ['👑', '🥈', '🥉'];
 
