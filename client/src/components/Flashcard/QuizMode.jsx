@@ -11,6 +11,11 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
 
   const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
+  const quizCards = React.useMemo(() => {
+    if (!flashcards || flashcards.length < 4) return flashcards || [];
+    return shuffle(flashcards);
+  }, [flashcards]);
+
   // Truncate long answers to a short option label
   const truncateOption = (text) => {
     if (!text) return '';
@@ -22,22 +27,22 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
   };
 
   useEffect(() => {
-    if (flashcards.length < 4) return;
-    const currentCard = flashcards[currentQIndex];
+    if (quizCards.length < 4) return;
+    const currentCard = quizCards[currentQIndex];
     if (!currentCard) return;
-    const wrongPool   = flashcards.filter((_, i) => i !== currentQIndex).map(f => f.answer);
+    const wrongPool   = quizCards.filter((_, i) => i !== currentQIndex).map(f => f.answer);
     const wrong3      = shuffle(wrongPool).slice(0, 3);
     setOptions(shuffle([currentCard.answer, ...wrong3]));
     setSelectedOpt(null);
-  }, [currentQIndex, flashcards]);
+  }, [currentQIndex, quizCards]);
 
   const handleSelect = (opt) => {
     if (selectedOpt) return;
     setSelectedOpt(opt);
-    const isCorrect = opt === flashcards[currentQIndex].answer;
+    const isCorrect = opt === quizCards[currentQIndex].answer;
     if (isCorrect) setScore(s => s + 1);
     setTimeout(() => {
-      if (currentQIndex < flashcards.length - 1) {
+      if (currentQIndex < quizCards.length - 1) {
         setCurrentQIndex(ci => ci + 1);
       } else {
         finishQuiz(isCorrect ? score + 1 : score);
@@ -48,12 +53,12 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
   const finishQuiz = async (finalScore) => {
     setIsFinished(true);
     try {
-      await api.post('/progress/quiz-score', { subject, score: finalScore, total: flashcards.length });
+      await api.post('/progress/quiz-score', { subject, score: finalScore, total: quizCards.length });
       toast.success('Score saved!');
     } catch { toast.error('Failed to save score'); }
   };
 
-  if (flashcards.length < 4) {
+  if (quizCards.length < 4) {
     return (
       <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
         You need at least 4 flashcards in this subject to take a quiz.
@@ -63,7 +68,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
 
   /* ── Results Screen ──────────────────────────────────────────── */
   if (isFinished) {
-    const pct = (score / flashcards.length) * 100;
+    const pct = (score / quizCards.length) * 100;
     const gradeInfo =
       pct >= 90 ? { grade: 'A', color: '#8b5cf6', glow: '0 0 40px rgba(139,92,246,0.5)' } :
       pct >= 70 ? { grade: 'B', color: '#14b8a6', glow: '0 0 40px rgba(20,184,166,0.4)' } :
@@ -103,7 +108,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
             marginBottom: '28px',
           }}
         >
-          Score: <strong style={{ color: gradeInfo.color }}>{score} / {flashcards.length}</strong>
+          Score: <strong style={{ color: gradeInfo.color }}>{score} / {quizCards.length}</strong>
           <span style={{ color: 'var(--text-muted)', marginLeft: '8px', fontSize: '0.9rem' }}>
             ({pct.toFixed(0)}%)
           </span>
@@ -140,7 +145,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
           {subject}
         </span>
         <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 500 }}>
-          Question {currentQIndex + 1} of {flashcards.length}
+          Question {currentQIndex + 1} of {quizCards.length}
         </span>
       </div>
 
@@ -148,7 +153,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
       <div style={{ width: '100%', height: '6px', background: 'var(--surface)', borderRadius: '999px', marginBottom: '28px', overflow: 'hidden' }}>
         <div style={{
           height: '100%',
-          width: `${(currentQIndex / flashcards.length) * 100}%`,
+          width: `${(currentQIndex / quizCards.length) * 100}%`,
           background: 'linear-gradient(90deg, #6d28d9, #8b5cf6)',
           borderRadius: '999px',
           transition: 'width 0.4s ease',
@@ -173,14 +178,14 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
           className="text-2xl font-heading"
           style={{ color: 'var(--text-primary)', lineHeight: 1.45, fontWeight: 700 }}
         >
-          {flashcards[currentQIndex]?.question}
+          {quizCards[currentQIndex]?.question}
         </h2>
       </div>
 
       {/* Answer Options */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {options.map((opt, i) => {
-          const isCorrectOpt = opt === flashcards[currentQIndex].answer;
+          const isCorrectOpt = opt === quizCards[currentQIndex].answer;
           const isPickedWrong = selectedOpt && opt === selectedOpt && !isCorrectOpt;
           const isDimmed = selectedOpt && !isCorrectOpt && opt !== selectedOpt;
 
