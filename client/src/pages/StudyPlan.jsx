@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import PlanForm from '../components/StudyPlan/PlanForm';
 import PlanCalendar from '../components/StudyPlan/PlanCalendar';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StudyPlan() {
@@ -52,6 +52,7 @@ export default function StudyPlan() {
 
   return (
     <div className="min-h-screen p-8 max-w-6xl mx-auto" style={{ display: 'flex', flexDirection: 'column', gap: '48px' }}>
+      <Toaster position="top-center" />
       <div>
         <h1 className="text-4xl font-heading font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           My Study Plan
