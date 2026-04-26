@@ -7,27 +7,33 @@ const connectDB = require('./config/db');
 // Load env vars
 dotenv.config();
 
-// ENV diagnostics — verify all critical variables are loaded
-console.log('ENV CHECK - GEMINI KEY exists:', !!process.env.GEMINI_API_KEY);
-console.log('ENV CHECK - MONGO URI exists:', !!process.env.MONGO_URI);
-console.log('ENV CHECK - JWT SECRET exists:', !!process.env.JWT_SECRET);
-// console.log('ENV CHECK - CLOUDINARY_CLOUD_NAME exists:', !!process.env.CLOUDINARY_CLOUD_NAME); // Disabled
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET', 'GEMINI_API_KEY'];
+const missingEnv = requiredEnv.filter((key) => !process.env[key]);
 
-// Connect to database
-connectDB();
+if (missingEnv.length) {
+  console.error(`Missing required environment variables: ${missingEnv.join(', ')}`);
+  process.exit(1);
+}
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(express.json());
 
-// CORS - allow multiple Vite dev ports to avoid port mismatch issues
+// CORS - support Railway frontend URL plus local dev URLs
+const clientUrlsFromEnv = [process.env.CLIENT_URL, process.env.CLIENT_URLS]
+  .filter(Boolean)
+  .flatMap((value) => value.split(','))
+  .map((value) => value.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  ...clientUrlsFromEnv,
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
-].filter(Boolean);
+];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -44,6 +50,18 @@ app.use(cors({
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.get('/', (req, res) => {
+  res.status(200).json({
+    service: 'flashmaster-backend',
+    status: 'ok',
+    health: '/api/health',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 // Cron Jobs
 require('./cron/reminders')();
@@ -67,6 +85,15 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+const startServer = async () => {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`Server running in ${process.env.NODE_ENV || 'production'} mode on port ${PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error('Server startup failed:', error.message);
+  process.exit(1);
 });
