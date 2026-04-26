@@ -51,6 +51,14 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+app.get('/', (req, res) => {
+  res.status(200).json({
+    service: 'flashmaster-backend',
+    status: 'ok',
+    health: '/api/health',
+  });
+});
+
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
