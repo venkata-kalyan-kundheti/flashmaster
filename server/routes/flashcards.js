@@ -233,10 +233,12 @@ router.patch('/:id/difficulty', verifyToken, async (req, res) => {
 
 router.patch('/:id/reviewed', verifyToken, async (req, res) => {
   try {
-    if (typeof req.body.markedForRevision === 'boolean') {
+    const markedForRevision = req.body?.markedForRevision;
+
+    if (typeof markedForRevision === 'boolean') {
       const flashcard = await Flashcard.findOneAndUpdate(
         { _id: req.params.id, userId: req.user.id },
-        { $set: { markedForRevision: req.body.markedForRevision } },
+        { $set: { markedForRevision } },
         { new: true }
       );
 
@@ -252,6 +254,11 @@ router.patch('/:id/reviewed', verifyToken, async (req, res) => {
       { $set: { isReviewed: true }, $inc: { reviewCount: 1 } },
       { new: true }
     );
+
+    if (!flashcard) {
+      return res.status(404).json({ message: 'Flashcard not found' });
+    }
+
     res.json(flashcard);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

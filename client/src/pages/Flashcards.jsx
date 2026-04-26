@@ -158,10 +158,13 @@ export default function Flashcards() {
   const markAsReviewed = async (cardId) => {
     if (reviewedIds.has(cardId)) return;
     try {
-      await api.patch(`/flashcards/${cardId}/reviewed`);
+      await api.patch(`/flashcards/${cardId}/reviewed`, {});
       setReviewedIds(prev => new Set(prev).add(cardId));
-    } catch {
-      // Silent fail — don't block the user experience
+      setFlashcards(prev => prev.map(fc => (
+        fc._id === cardId ? { ...fc, isReviewed: true } : fc
+      )));
+    } catch (error) {
+      console.error('Failed to mark flashcard as reviewed:', error);
     }
   };
 
