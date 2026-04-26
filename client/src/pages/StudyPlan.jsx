@@ -94,58 +94,67 @@ export default function StudyPlan() {
                   className="glass-card p-4"
                   style={{ position: 'relative' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                    <h4 className="font-bold" style={{ color: '#ec4899' }}>{p.subject}</h4>
-                    <span style={{ fontSize: '0.72rem', color: '#14b8a6', border: '1px solid rgba(20,184,166,0.35)', background: 'rgba(20,184,166,0.12)', borderRadius: '999px', padding: '2px 8px', fontWeight: 600 }}>
-                      Active
-                    </span>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      marginBottom: '8px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', minWidth: 0, flex: '1 1 220px' }}>
+                      <h4 className="font-bold" style={{ color: '#ec4899' }}>{p.subject}</h4>
+                      <span style={{ fontSize: '0.72rem', color: '#14b8a6', border: '1px solid rgba(20,184,166,0.35)', background: 'rgba(20,184,166,0.12)', borderRadius: '999px', padding: '2px 8px', fontWeight: 600 }}>
+                        Active
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => handlePlanComplete(p._id)}
+                        title="Mark this full plan as completed"
+                        aria-label="Complete this plan"
+                        style={{
+                          border: '1px solid rgba(20,184,166,0.35)',
+                          background: 'rgba(20,184,166,0.1)',
+                          color: '#14b8a6',
+                          borderRadius: '8px',
+                          padding: '4px 10px',
+                          cursor: 'pointer',
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          transition: 'all 0.18s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.1)'; }}
+                      >
+                        Complete Plan
+                      </button>
+
+                      <button
+                        onClick={() => handlePlanDelete(p._id)}
+                        title="Delete this plan permanently"
+                        aria-label="Delete this plan"
+                        style={{
+                          border: 'none',
+                          background: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          opacity: 0.7,
+                          transition: 'opacity 0.2s, color 0.2s',
+                          padding: '4px 0',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#f87171'; }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.color = 'var(--text-muted)'; }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-
-                  <button
-                    onClick={() => handlePlanDelete(p._id)}
-                    title="Delete this plan permanently"
-                    aria-label="Delete this plan"
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '10px',
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      fontSize: '1rem',
-                      opacity: 0.5,
-                      transition: 'opacity 0.2s, color 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#f87171'; }}
-                    onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--text-muted)'; }}
-                  >
-                    Delete
-                  </button>
-
-                  <button
-                    onClick={() => handlePlanComplete(p._id)}
-                    title="Mark this full plan as completed"
-                    aria-label="Complete this plan"
-                    style={{
-                      position: 'absolute',
-                      top: '10px',
-                      right: '62px',
-                      border: '1px solid rgba(20,184,166,0.35)',
-                      background: 'rgba(20,184,166,0.1)',
-                      color: '#14b8a6',
-                      borderRadius: '8px',
-                      padding: '4px 10px',
-                      cursor: 'pointer',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      transition: 'all 0.18s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.2)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.1)'; }}
-                  >
-                    Complete Plan
-                  </button>
 
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                     Exam: {new Date(p.examDate).toLocaleDateString()}
