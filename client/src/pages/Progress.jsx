@@ -1,27 +1,81 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import api from '../utils/api';
 import ProgressChart from '../components/Progress/ProgressChart';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { STUDY_TIME_RECORDED_EVENT, usePomodoro } from '../context/PomodoroContext';
 
-const statCards = [
-  { label: 'Total Cards',   key: d => d?.totalFlashcards || 0,                                             color: 'var(--text-primary)',   accent: null },
-  { label: 'Reviewed',      key: d => d?.reviewedCards || 0,                                               color: '#8b5cf6',               accent: 'rgba(139,92,246,0.12)' },
-  { label: 'Study Time',    key: d => `${Math.floor((d?.studyMinutes||0)/60)}h ${(d?.studyMinutes||0)%60}m`, color: '#14b8a6',             accent: 'rgba(20,184,166,0.10)' },
-  { label: 'Quizzes Taken', key: d => d?.quizScores?.length || 0,                                         color: '#ec4899',               accent: 'rgba(236,72,153,0.10)' },
-];
+const formatHMS = (totalSeconds) => {
+  const safe = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safe / 3600);
+  const minutes = Math.floor((safe % 3600) / 60);
+  const seconds = safe % 60;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+};
 
 export default function Progress() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [recentRecordedSeconds, setRecentRecordedSeconds] = useState(0);
+  const serverStudySecondsRef = useRef(0);
+  const { currentFocusElapsedSec } = usePomodoro();
+
+  const storedStudySeconds = Math.max(0, Math.floor((data?.studyMinutes || 0) * 60));
+  const totalStudySeconds = storedStudySeconds + recentRecordedSeconds + currentFocusElapsedSec;
+
+  const statCards = [
+    { label: 'Total Cards', value: data?.totalFlashcards || 0, color: 'var(--text-primary)', accent: null },
+    { label: 'Reviewed', value: data?.reviewedCards || 0, color: '#8b5cf6', accent: 'rgba(139,92,246,0.12)' },
+    { label: 'Study Time', value: formatHMS(totalStudySeconds), color: '#14b8a6', accent: 'rgba(20,184,166,0.10)' },
+    { label: 'Quizzes Taken', value: data?.quizScores?.length || 0, color: '#ec4899', accent: 'rgba(236,72,153,0.10)' },
+  ];
 
   useEffect(() => {
-    (async () => {
+    const fetchProgress = async (silent = false) => {
       try {
         const res = await api.get('/progress');
+
+        const nextStudySeconds = Math.max(0, Math.floor((res.data?.studyMinutes || 0) * 60));
+        const syncedDelta = Math.max(0, nextStudySeconds - serverStudySecondsRef.current);
+        serverStudySecondsRef.current = nextStudySeconds;
+
+        if (syncedDelta > 0) {
+          setRecentRecordedSeconds((prev) => Math.max(0, prev - syncedDelta));
+        }
+
         setData(res.data);
       } catch { console.error('Failed to grab progress data'); }
-      finally { setLoading(false); }
-    })();
+      finally {
+        if (!silent) setLoading(false);
+      }
+    };
+
+    fetchProgress();
+
+    const interval = setInterval(() => {
+      fetchProgress(true);
+    }, 15000);
+
+    const handleStudyTimeRecorded = (event) => {
+      const seconds = Number(event?.detail?.seconds);
+      if (Number.isFinite(seconds) && seconds > 0) {
+        setRecentRecordedSeconds((prev) => prev + Math.floor(seconds));
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchProgress(true);
+      }
+    };
+
+    window.addEventListener(STUDY_TIME_RECORDED_EVENT, handleStudyTimeRecorded);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener(STUDY_TIME_RECORDED_EVENT, handleStudyTimeRecorded);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   if (loading) {
@@ -42,7 +96,7 @@ export default function Progress() {
       </h1>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {statCards.map(({ label, key, color, accent }) => (
+        {statCards.map(({ label, value, color, accent }) => (
           <div
             key={label}
             className="glass-card p-4 text-center"
@@ -58,8 +112,13 @@ export default function Progress() {
               className="text-3xl font-bold font-heading"
               style={{ color }}
             >
-              {key(data)}
+              {value}
             </span>
+            {label === 'Study Time' && (
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginTop: '6px' }}>
+                HH:MM:SS
+              </div>
+            )}
           </div>
         ))}
       </div>

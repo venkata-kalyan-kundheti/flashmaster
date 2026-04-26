@@ -137,15 +137,15 @@ export default function PlanCalendar({ plans, onTaskComplete }) {
                 key={i}
                 style={{
                   padding: '14px 16px',
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
+                  background: t.completed ? 'rgba(20,184,166,0.12)' : 'var(--surface)',
+                  border: `1px solid ${t.completed ? 'rgba(20,184,166,0.35)' : 'var(--border)'}`,
                   borderRadius: '14px',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <h4 style={{ fontWeight: 700, color: '#8b5cf6', fontSize: '0.95rem' }}>{t.subject}</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '10px' }}>
+                  <h4 style={{ fontWeight: 700, color: t.completed ? '#14b8a6' : '#8b5cf6', fontSize: '0.95rem', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>{t.subject}</h4>
                   {t.completed ? (
-                    <span style={{ color: '#14b8a6', fontSize: '0.82rem', fontWeight: 600 }}>✅ Completed</span>
+                    <span style={{ color: '#0f766e', fontSize: '0.82rem', fontWeight: 700, border: '1px solid rgba(15,118,110,0.35)', background: 'rgba(15,118,110,0.12)', borderRadius: '999px', padding: '2px 9px' }}>✅ Completed</span>
                   ) : (
                     <button
                       onClick={() => onTaskComplete(t.planId, t.dayId)}
@@ -173,9 +173,14 @@ export default function PlanCalendar({ plans, onTaskComplete }) {
                       key={j}
                       style={{
                         fontSize: '0.85rem',
-                        color: t.completed ? 'var(--text-muted)' : 'var(--text-secondary)',
+                        color: t.completed ? '#0f766e' : 'var(--text-secondary)',
                         textDecoration: t.completed ? 'line-through' : 'none',
+                        textDecorationColor: t.completed ? 'rgba(148,163,184,0.7)' : 'transparent',
                         paddingLeft: '12px',
+                        lineHeight: 1.45,
+                        whiteSpace: 'normal',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
                         borderLeft: `2px solid ${t.completed ? 'rgba(20,184,166,0.3)' : 'rgba(139,92,246,0.35)'}`,
                       }}
                     >

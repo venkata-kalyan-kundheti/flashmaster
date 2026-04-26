@@ -101,9 +101,38 @@ router.patch('/:id/day/:dayId', verifyToken, async (req, res) => {
     const day = plan.schedule.id(req.params.dayId);
     if (day) {
       day.isCompleted = true;
+
+      const completedDays = plan.schedule.filter((s) => s.isCompleted).length;
+      const chapterCount = plan.chapters.length;
+      const completedChapterCount = Math.min(completedDays, chapterCount);
+
+      plan.chapters.forEach((chapter, index) => {
+        chapter.isCompleted = index < completedChapterCount;
+      });
+
       await plan.save();
     }
     
+    res.json(plan);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.patch('/:id/complete', verifyToken, async (req, res) => {
+  try {
+    const plan = await StudyPlan.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!plan) return res.status(404).json({ message: 'Not found' });
+
+    plan.isActive = false;
+    plan.schedule.forEach((day) => {
+      day.isCompleted = true;
+    });
+    plan.chapters.forEach((chapter) => {
+      chapter.isCompleted = true;
+    });
+
+    await plan.save();
     res.json(plan);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

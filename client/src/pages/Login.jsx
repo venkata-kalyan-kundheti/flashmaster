@@ -55,6 +55,7 @@ export default function AuthPage() {
   const [loginEmail,    setLoginEmail]    = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError,    setLoginError]    = useState('');
+  const [loginSubmitting, setLoginSubmitting] = useState(false);
 
   /* Register state */
   const [regName,     setRegName]     = useState('');
@@ -76,11 +77,14 @@ export default function AuthPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
+    setLoginSubmitting(true);
     try {
       await login(loginEmail, loginPassword);
       navigate('/dashboard');
     } catch (err) {
       setLoginError(err.response?.data?.message || 'Login failed');
+    } finally {
+      setLoginSubmitting(false);
     }
   };
 
@@ -160,6 +164,20 @@ export default function AuthPage() {
         }
         /* hide scrollbar cosmetically */
         .auth-face::-webkit-scrollbar { display: none; }
+
+        .btn-spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255,255,255,0.35);
+          border-top-color: #ffffff;
+          border-radius: 50%;
+          animation: loginSpin 0.7s linear infinite;
+        }
+
+        @keyframes loginSpin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
       `}</style>
 
       <div className="auth-card-inner" style={{ transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}>
@@ -188,6 +206,7 @@ export default function AuthPage() {
                 onChange={e => setLoginEmail(e.target.value)}
                 onFocus={() => onFocus('le')} onBlur={() => onBlur('le')}
                 style={inp(focus.le)}
+                disabled={loginSubmitting}
               />
             </div>
             <div>
@@ -197,15 +216,35 @@ export default function AuthPage() {
                 onChange={e => setLoginPassword(e.target.value)}
                 onFocus={() => onFocus('lp')} onBlur={() => onBlur('lp')}
                 style={inp(focus.lp)}
+                disabled={loginSubmitting}
               />
             </div>
 
             <button
-              type="submit" style={submitBtn}
-              onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(139,92,246,0.55)'; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)';    e.currentTarget.style.boxShadow = '0 4px 20px rgba(139,92,246,0.42)'; }}
+              type="submit"
+              style={{
+                ...submitBtn,
+                opacity: loginSubmitting ? 0.85 : 1,
+                cursor: loginSubmitting ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '10px',
+              }}
+              disabled={loginSubmitting}
+              onMouseEnter={e => {
+                if (loginSubmitting) return;
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 28px rgba(139,92,246,0.55)';
+              }}
+              onMouseLeave={e => {
+                if (loginSubmitting) return;
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(139,92,246,0.42)';
+              }}
             >
-              Sign In
+              {loginSubmitting && <span className="btn-spinner" aria-hidden="true" />}
+              {loginSubmitting ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 

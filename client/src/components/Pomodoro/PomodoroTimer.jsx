@@ -1,41 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
-import api from '../../utils/api';
+import React from 'react';
+import { usePomodoro } from '../../context/PomodoroContext';
 
 export default function PomodoroTimer() {
-  const [mode,    setMode]    = useState('work');
-  const [seconds, setSeconds] = useState(25 * 60);
-  const [running, setRunning] = useState(false);
-  const intervalRef           = useRef(null);
+  const {
+    mode,
+    secondsLeft,
+    durationSec,
+    running,
+    toggle,
+    setMode,
+  } = usePomodoro();
 
-  const TIMES = { work: 25 * 60, break: 5 * 60 };
-
-  useEffect(() => {
-    if (running) {
-      intervalRef.current = setInterval(() => {
-        setSeconds(s => {
-          if (s <= 1) {
-            clearInterval(intervalRef.current);
-            setRunning(false);
-            const next = mode === 'work' ? 'break' : 'work';
-            // Log study time when a work session completes
-            if (mode === 'work') {
-              api.post('/progress/study-time', { minutes: 25 }).catch(() => {});
-            }
-            setMode(next);
-            setSeconds(TIMES[next]);
-            new Audio('/notification.mp3').play().catch(() => {});
-            return 0;
-          }
-          return s - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(intervalRef.current);
-  }, [running, mode]);
-
-  const mins     = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const secs     = String(seconds % 60).padStart(2, '0');
-  const progress = ((TIMES[mode] - seconds) / TIMES[mode]) * 100;
+  const mins     = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const secs     = String(secondsLeft % 60).padStart(2, '0');
+  const progress = ((durationSec - secondsLeft) / durationSec) * 100;
   const accent   = mode === 'work' ? '#8b5cf6' : '#14b8a6';
   const glowClr  = mode === 'work' ? 'rgba(139,92,246,0.35)' : 'rgba(20,184,166,0.3)';
 
@@ -52,7 +30,7 @@ export default function PomodoroTimer() {
         ].map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => { setMode(key); setSeconds(TIMES[key]); setRunning(false); }}
+            onClick={() => setMode(key)}
             style={{
               padding: '5px 16px',
               borderRadius: '999px',
@@ -103,7 +81,7 @@ export default function PomodoroTimer() {
 
       {/* Start / Pause */}
       <button
-        onClick={() => setRunning(r => !r)}
+        onClick={toggle}
         style={{
           padding: '10px 32px',
           borderRadius: '999px',

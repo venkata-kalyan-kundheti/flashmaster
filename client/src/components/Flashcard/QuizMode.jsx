@@ -2,12 +2,76 @@ import React, { useState, useEffect } from 'react';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
+const QUIZ_KEYFRAMES = `
+  @keyframes quiz-fade-up-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes quiz-card-subtle-in {
+    from { opacity: 0.92; transform: translateY(6px) scale(0.995); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes quiz-result-badge-pop {
+    0% { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+    70% { opacity: 1; transform: scale(1.08) rotate(2deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0deg); }
+  }
+
+  @keyframes quiz-result-gold-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  @keyframes quiz-result-soft-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.04); opacity: 0.95; }
+  }
+
+  .quiz-question-animate {
+    animation: quiz-card-subtle-in 220ms ease-out;
+  }
+
+  .quiz-options-animate {
+    animation: quiz-fade-up-in 220ms ease-out;
+  }
+
+  .quiz-result-card-animate {
+    animation: quiz-fade-up-in 280ms ease-out;
+  }
+
+  .quiz-result-emoji {
+    animation: quiz-result-badge-pop 340ms ease-out;
+  }
+
+  .quiz-result-emoji--excellent {
+    animation: quiz-result-badge-pop 340ms ease-out, quiz-result-gold-float 2.2s ease-in-out 340ms infinite;
+  }
+
+  .quiz-result-emoji--good {
+    animation: quiz-result-badge-pop 340ms ease-out, quiz-result-soft-pulse 1.8s ease-in-out 340ms infinite;
+  }
+`;
+
+function injectQuizKeyframes() {
+  if (document.getElementById('quiz-mode-keyframes')) return;
+  const style = document.createElement('style');
+  style.id = 'quiz-mode-keyframes';
+  style.textContent = QUIZ_KEYFRAMES;
+  document.head.appendChild(style);
+}
+
 export default function QuizMode({ subject, flashcards, onFinish }) {
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [options,       setOptions]       = useState([]);
   const [selectedOpt,   setSelectedOpt]   = useState(null);
   const [score,         setScore]         = useState(0);
   const [isFinished,    setIsFinished]    = useState(false);
+
+  useEffect(() => {
+    injectQuizKeyframes();
+  }, []);
 
   const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
@@ -47,7 +111,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
       } else {
         finishQuiz(isCorrect ? score + 1 : score);
       }
-    }, 1400);
+    }, 720);
   };
 
   const finishQuiz = async (finalScore) => {
@@ -75,16 +139,29 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
       pct >= 50 ? { grade: 'C', color: '#f59e0b', glow: '0 0 40px rgba(245,158,11,0.4)' } :
                   { grade: 'F', color: '#f87171', glow: '0 0 40px rgba(248,113,113,0.4)' };
 
+    const resultVisual =
+      pct >= 90 ? { emoji: '🏆', cls: 'quiz-result-emoji--excellent', note: 'Outstanding performance' } :
+      pct >= 75 ? { emoji: '🎯', cls: 'quiz-result-emoji--good',      note: 'Great job' } :
+      pct >= 50 ? { emoji: '👍', cls: '',                             note: 'Good effort' } :
+                  { emoji: '📘', cls: '',                             note: 'Keep practicing' };
+
     return (
       <div
-        className="glass-card p-12 text-center max-w-lg mx-auto"
+        className="glass-card p-12 text-center max-w-lg mx-auto quiz-result-card-animate"
         style={{ boxShadow: '0 16px 60px rgba(0,0,0,0.5)' }}
       >
+        <div
+          className={`quiz-result-emoji ${resultVisual.cls}`}
+          style={{ fontSize: '2.8rem', lineHeight: 1, marginBottom: '10px' }}
+        >
+          {resultVisual.emoji}
+        </div>
+
         <h2 className="text-3xl font-heading font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-          Quiz Completed! 🎉
+          Quiz Completed!
         </h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px', fontSize: '0.9rem' }}>
-          Subject: {subject}
+          Subject: {subject} • {resultVisual.note}
         </p>
 
         <div style={{
@@ -162,7 +239,8 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
 
       {/* Question Card */}
       <div
-        className="glass-card"
+        key={`q-${currentQIndex}`}
+        className="glass-card quiz-question-animate"
         style={{
           padding: '40px',
           marginBottom: '20px',
@@ -183,7 +261,7 @@ export default function QuizMode({ subject, flashcards, onFinish }) {
       </div>
 
       {/* Answer Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div key={`o-${currentQIndex}`} className="grid grid-cols-1 md:grid-cols-2 gap-3 quiz-options-animate">
         {options.map((opt, i) => {
           const isCorrectOpt = opt === quizCards[currentQIndex].answer;
           const isPickedWrong = selectedOpt && opt === selectedOpt && !isCorrectOpt;

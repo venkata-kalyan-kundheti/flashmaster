@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PomodoroProvider } from './context/PomodoroContext';
 import Login from './pages/Login'; // AuthPage — contains both login & register flip
 import Materials from './pages/Materials';
 import Flashcards from './pages/Flashcards';
@@ -47,28 +48,30 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/" element={<RootRedirect />} />
-            <Route path="/login"    element={<Login />} />
-            <Route path="/register" element={<Login />} />
-            
-            {/* Student Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><StudentHome /></ProtectedRoute>} />
-            <Route path="/materials" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
-            <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
-            <Route path="/studyplan" element={<ProtectedRoute><StudyPlan /></ProtectedRoute>} />
-            <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
-            <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
-            <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <PomodoroProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<RootRedirect />} />
+              <Route path="/login"    element={<Login />} />
+              <Route path="/register" element={<Login />} />
+              
+              {/* Student Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><StudentHome /></ProtectedRoute>} />
+              <Route path="/materials" element={<ProtectedRoute><Materials /></ProtectedRoute>} />
+              <Route path="/flashcards" element={<ProtectedRoute><Flashcards /></ProtectedRoute>} />
+              <Route path="/studyplan" element={<ProtectedRoute><StudyPlan /></ProtectedRoute>} />
+              <Route path="/progress" element={<ProtectedRoute><Progress /></ProtectedRoute>} />
+              <Route path="/quiz" element={<ProtectedRoute><Quiz /></ProtectedRoute>} />
+              <Route path="/leaderboard" element={<ProtectedRoute><LeaderboardPage /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
-            <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
-            <Route path="/admin/materials" element={<AdminRoute><AdminMaterials /></AdminRoute>} />
-          </Routes>
-        </Router>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminRoute><AdminOverview /></AdminRoute>} />
+              <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+              <Route path="/admin/materials" element={<AdminRoute><AdminMaterials /></AdminRoute>} />
+            </Routes>
+          </Router>
+        </PomodoroProvider>
       </AuthProvider>
     </ThemeProvider>
   );

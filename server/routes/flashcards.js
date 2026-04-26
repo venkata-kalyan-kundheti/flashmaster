@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose');
 const verifyToken = require('../middleware/auth');
 const Material = require('../models/Material');
 const Flashcard = require('../models/Flashcard');
@@ -7,7 +8,6 @@ const { extractTextFromPDF } = require('../utils/pdfParser');
 const { extractTextFromImage } = require('../utils/ocrHelper');
 const { generateFlashcards, generateSummary } = require('../utils/geminiHelper');
 const fs = require('fs');
-const path = require('path');
 // Cloudinary disabled - using local files only
 
 // Download function removed - using local files only
@@ -176,6 +176,7 @@ router.post('/generate/:materialId', verifyToken, async (req, res) => {
         materialId: material._id,
         userId: req.user.id,
         subject: material.subject,
+        topic: card.topic || '',
         question: card.question,
         answer: card.answer,
         difficulty: card.difficulty || 'medium',
@@ -232,11 +233,47 @@ router.patch('/:id/difficulty', verifyToken, async (req, res) => {
 
 router.patch('/:id/reviewed', verifyToken, async (req, res) => {
   try {
+    if (typeof req.body.markedForRevision === 'boolean') {
+      const flashcard = await Flashcard.findOneAndUpdate(
+        { _id: req.params.id, userId: req.user.id },
+        { $set: { markedForRevision: req.body.markedForRevision } },
+        { new: true }
+      );
+
+      if (!flashcard) {
+        return res.status(404).json({ message: 'Flashcard not found' });
+      }
+
+      return res.json(flashcard);
+    }
+
     const flashcard = await Flashcard.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
       { $set: { isReviewed: true }, $inc: { reviewCount: 1 } },
       { new: true }
     );
+    res.json(flashcard);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.patch('/:id/revision', verifyToken, async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ message: 'Invalid flashcard id' });
+    }
+
+    const flashcard = await Flashcard.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { $set: { markedForRevision: !!req.body.markedForRevision } },
+      { new: true }
+    );
+
+    if (!flashcard) {
+      return res.status(404).json({ message: 'Flashcard not found' });
+    }
+
     res.json(flashcard);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

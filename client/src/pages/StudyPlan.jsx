@@ -42,6 +42,19 @@ export default function StudyPlan() {
     }
   };
 
+  const handlePlanComplete = async (planId) => {
+    try {
+      await api.patch(`/studyplans/${planId}/complete`, {});
+      toast.success('Plan marked as completed');
+      fetchPlans();
+    } catch {
+      toast.error('Failed to complete plan');
+    }
+  };
+
+  const activePlans = plans.filter(p => p.isActive);
+  const completedPlans = plans.filter(p => !p.isActive);
+
   if (loading) {
     return (
       <div className="min-h-screen p-8 max-w-6xl mx-auto">
@@ -75,14 +88,23 @@ export default function StudyPlan() {
               Active Plans
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {plans.map(p => (
+              {activePlans.map(p => (
                 <div
                   key={p._id}
                   className="glass-card p-4"
                   style={{ position: 'relative' }}
                 >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    <h4 className="font-bold" style={{ color: '#ec4899' }}>{p.subject}</h4>
+                    <span style={{ fontSize: '0.72rem', color: '#14b8a6', border: '1px solid rgba(20,184,166,0.35)', background: 'rgba(20,184,166,0.12)', borderRadius: '999px', padding: '2px 8px', fontWeight: 600 }}>
+                      Active
+                    </span>
+                  </div>
+
                   <button
                     onClick={() => handlePlanDelete(p._id)}
+                    title="Delete this plan permanently"
+                    aria-label="Delete this plan"
                     style={{
                       position: 'absolute',
                       top: '10px',
@@ -98,16 +120,147 @@ export default function StudyPlan() {
                     onMouseEnter={e => { e.currentTarget.style.opacity = 1; e.currentTarget.style.color = '#f87171'; }}
                     onMouseLeave={e => { e.currentTarget.style.opacity = 0.5; e.currentTarget.style.color = 'var(--text-muted)'; }}
                   >
-                    ✖
+                    Delete
                   </button>
-                  <h4 className="font-bold" style={{ color: '#ec4899' }}>{p.subject}</h4>
+
+                  <button
+                    onClick={() => handlePlanComplete(p._id)}
+                    title="Mark this full plan as completed"
+                    aria-label="Complete this plan"
+                    style={{
+                      position: 'absolute',
+                      top: '10px',
+                      right: '62px',
+                      border: '1px solid rgba(20,184,166,0.35)',
+                      background: 'rgba(20,184,166,0.1)',
+                      color: '#14b8a6',
+                      borderRadius: '8px',
+                      padding: '4px 10px',
+                      cursor: 'pointer',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      transition: 'all 0.18s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(20,184,166,0.1)'; }}
+                  >
+                    Complete Plan
+                  </button>
+
                   <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
                     Exam: {new Date(p.examDate).toLocaleDateString()}
                   </p>
+
+                  <div style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {(p.chapters || []).slice(0, 8).map((chapter, idx) => {
+                      const chapterName = chapter?.name || `Topic ${idx + 1}`;
+                      const isChapterCompleted = !!chapter?.isCompleted;
+                      return (
+                        <span
+                          key={`${p._id}-chapter-${idx}`}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            color: isChapterCompleted ? '#0f766e' : 'var(--text-secondary)',
+                            background: isChapterCompleted ? 'rgba(16,185,129,0.16)' : 'var(--surface)',
+                            border: `1px solid ${isChapterCompleted ? 'rgba(16,185,129,0.45)' : 'var(--border)'}`,
+                            maxWidth: '100%',
+                            whiteSpace: 'normal',
+                            overflowWrap: 'anywhere',
+                            wordBreak: 'break-word',
+                            lineHeight: 1.3,
+                          }}
+                          title={chapterName}
+                        >
+                          {chapterName}
+                        </span>
+                      );
+                    })}
+                    {(p.chapters || []).length > 8 && (
+                      <span
+                        style={{
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          color: '#8b5cf6',
+                          background: 'rgba(139,92,246,0.12)',
+                          border: '1px solid rgba(139,92,246,0.28)',
+                        }}
+                      >
+                        +{p.chapters.length - 8} more
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
-              {plans.length === 0 && (
+
+              {activePlans.length === 0 && (
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>No plans active.</p>
+              )}
+
+              {completedPlans.length > 0 && (
+                <div style={{ marginTop: '8px' }}>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                    Completed Plans
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {completedPlans.map(p => (
+                      <div key={`done-${p._id}`} className="glass-card p-3" style={{ opacity: 0.78 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <h4 className="font-bold" style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>{p.subject}</h4>
+                          <span style={{ fontSize: '0.72rem', color: '#14b8a6', fontWeight: 700 }}>Completed</span>
+                        </div>
+                        <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          Exam: {new Date(p.examDate).toLocaleDateString()}
+                        </p>
+                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {(p.chapters || []).slice(0, 8).map((chapter, idx) => {
+                            const chapterName = chapter?.name || `Topic ${idx + 1}`;
+                            return (
+                              <span
+                                key={`done-${p._id}-chapter-${idx}`}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '999px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: '#0f766e',
+                                  background: 'rgba(16,185,129,0.16)',
+                                  border: '1px solid rgba(16,185,129,0.45)',
+                                  maxWidth: '100%',
+                                  whiteSpace: 'normal',
+                                  overflowWrap: 'anywhere',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.3,
+                                }}
+                              >
+                                {chapterName}
+                              </span>
+                            );
+                          })}
+                          {(p.chapters || []).length > 8 && (
+                            <span
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '999px',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                color: '#0f766e',
+                                background: 'rgba(16,185,129,0.16)',
+                                border: '1px solid rgba(16,185,129,0.45)',
+                              }}
+                            >
+                              +{p.chapters.length - 8} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -115,7 +268,7 @@ export default function StudyPlan() {
 
         {/* Calendar */}
         <div className="lg:col-span-2">
-          <PlanCalendar plans={plans} onTaskComplete={handleTaskComplete} />
+          <PlanCalendar plans={activePlans} onTaskComplete={handleTaskComplete} />
         </div>
       </div>
     </div>

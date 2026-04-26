@@ -55,6 +55,23 @@ async function callGeminiWithFallback(prompt) {
   throw lastError || new Error('All Gemini models failed');
 }
 
+function normalizeTopicLabel(topicValue, index) {
+  if (typeof topicValue !== 'string') return `Topic ${index + 1}`;
+
+  const words = topicValue
+    .replace(/[^a-zA-Z0-9\s-]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (words.length === 0) return `Topic ${index + 1}`;
+
+  return words
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 async function generateFlashcards(text, subject) {
   console.log('geminiHelper: generateFlashcards called');
   console.log('geminiHelper: API key exists:', !!process.env.GEMINI_API_KEY);
@@ -66,6 +83,13 @@ async function generateFlashcards(text, subject) {
   }
 
   const prompt = `You are an expert study assistant and professor. Based on the following study material about "${subject}", generate exactly 10 detailed flashcards for exam preparation.
+
+TOPIC NAME RULES:
+- Generate a clear topic name for each flashcard in a "topic" field.
+- Each topic must be specific, concise, and exam-relevant.
+- Each topic must be exactly 1 or 2 words only.
+- Do not use full questions or long phrases in the topic.
+- All 10 topics should be distinct.
 
 CRITICAL FORMATTING RULES FOR ANSWERS:
 - Each answer MUST be structured as detailed bullet points with sub-points.
@@ -84,6 +108,7 @@ IMPORTANT: Return ONLY a raw JSON array. No markdown. No backticks. No explanati
 
 [
   {
+    "topic": "Core Concept Topic",
     "question": "What is...",
     "answer": "• Detailed first key point with full explanation\\n  - Supporting sub-detail that adds depth\\n  - Another relevant sub-detail\\n• Detailed second key point explaining the concept clearly\\n  - Example or clarification\\n• Third detailed point with enough context for understanding",
     "difficulty": "easy"
@@ -122,12 +147,17 @@ ${text.slice(0, 7000)}`;
   const parsed = JSON.parse(jsonString);
   console.log('geminiHelper: parsed successfully, cards:', parsed.length);
 
-  // Validate each card has required fields
-  const valid = parsed.filter(card => card.question && card.answer).map(card => ({
-    question: card.question,
-    answer: card.answer,
-    difficulty: ['easy', 'medium', 'hard'].includes(card.difficulty) ? card.difficulty : 'medium',
-  }));
+  // Validate each card has required fields and normalize topic labels
+  const valid = parsed.filter(card => card.question && card.answer).map((card, index) => {
+    const normalizedTopic = normalizeTopicLabel(card.topic, index);
+
+    return {
+      topic: normalizedTopic,
+      question: card.question,
+      answer: card.answer,
+      difficulty: ['easy', 'medium', 'hard'].includes(card.difficulty) ? card.difficulty : 'medium',
+    };
+  });
 
   if (valid.length === 0) throw new Error('Gemini returned cards with missing fields');
 

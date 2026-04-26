@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import api from '../utils/api';
 import { useDropzone } from 'react-dropzone';
+import { useNavigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function Materials() {
+  const navigate = useNavigate();
   const [materials, setMaterials] = useState([]);
   const [subject, setSubject]     = useState('');
   const [topic, setTopic]         = useState('');
   const [title, setTitle]         = useState('');
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading]     = useState(true);
+  const [generatingMaterialId, setGeneratingMaterialId] = useState(null);
 
   const formatFileSize = (bytes) => {
     if (typeof bytes !== 'number') return '0.00 MB';
@@ -68,13 +71,17 @@ export default function Materials() {
   });
 
   const handleGenerate = async (id) => {
+    if (generatingMaterialId) return;
+    setGeneratingMaterialId(id);
     const genToast = toast.loading('Gemini is generating flashcards…');
     try {
       await api.post(`/flashcards/generate/${id}`, {});
       toast.success('Flashcards Generated Successfully! 🧠', { id: genToast });
-      fetchMaterials();
+      await fetchMaterials();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to generate flashcards', { id: genToast });
+    } finally {
+      setGeneratingMaterialId(null);
     }
   };
 
@@ -233,18 +240,42 @@ export default function Materials() {
             >
               <div>
                 {mat.flashcardsGenerated ? (
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span
+                      className="text-sm flex items-center gap-1"
+                      style={{ color: '#14b8a6', fontWeight: 500 }}
+                    >
+                      ✅ Flashcards Ready
+                    </span>
+                    <button
+                      onClick={() => navigate('/flashcards')}
+                      style={{
+                        border: '1px solid rgba(20,184,166,0.35)',
+                        background: 'rgba(20,184,166,0.15)',
+                        color: '#5eead4',
+                        borderRadius: '10px',
+                        padding: '7px 12px',
+                        fontSize: '0.82rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Go to Flashcards
+                    </button>
+                  </div>
+                ) : generatingMaterialId === mat._id ? (
                   <span
-                    className="text-sm flex items-center gap-1"
-                    style={{ color: '#14b8a6', fontWeight: 500 }}
+                    className="text-sm"
+                    style={{ color: 'var(--text-secondary)', fontWeight: 500 }}
                   >
-                    ✅ Flashcards Ready
+                    Generating flashcards...
                   </span>
                 ) : (
                   <button
                     onClick={() => handleGenerate(mat._id)}
                     className="btn-gemini"
+                    disabled={!!generatingMaterialId}
                   >
-                    <span className="gemini-icon">⚡</span>
                     Generate with Gemini
                   </button>
                 )}

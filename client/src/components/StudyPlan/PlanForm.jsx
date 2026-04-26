@@ -61,6 +61,26 @@ export default function PlanForm({ onPlanCreated }) {
 
   return (
     <form onSubmit={handleSubmit} className="glass-card p-6" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <style>{`
+        .plan-material-select {
+          color: var(--input-text);
+        }
+
+        .plan-material-select option {
+          background: #ffffff;
+          color: #111827;
+        }
+
+        .plan-material-select option:disabled {
+          color: #6b7280;
+        }
+
+        .plan-material-select option:checked {
+          background: #e5e7eb;
+          color: #111827;
+        }
+      `}</style>
+
       <h3
         className="text-xl font-heading font-semibold"
         style={{ color: '#8b5cf6', marginBottom: '4px' }}
@@ -71,6 +91,7 @@ export default function PlanForm({ onPlanCreated }) {
       <div>
         <label style={labelStyle}>Select Document</label>
         <select
+          className="plan-material-select"
           value={materialId} onChange={e => setMaterialId(e.target.value)}
           style={fieldStyle(focus.m)}
           onFocus={() => onF('m')} onBlur={() => onB('m')}
